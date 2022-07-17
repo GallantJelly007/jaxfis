@@ -288,6 +288,9 @@ class jax{
      * 
      * @param {boolean|undefined} params.credentials 
      * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки POST-запроса
      */
@@ -324,6 +327,8 @@ class jax{
      * 
      * @param {boolean|undefined} params.credentials 
      * Устанавливает WithCredentials для кросс-доменных запросов
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки GET-запроса
      */
@@ -368,6 +373,9 @@ class jax{
      * 
      * @param {boolean|undefined} params.credentials 
      * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки PUT-запроса
      */
@@ -403,6 +411,9 @@ class jax{
      * 
      * @param {boolean|undefined} params.credentials 
      * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки DELETE-запроса
      */
