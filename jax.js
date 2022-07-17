@@ -27,7 +27,7 @@ class jax{
 		}
 		if (!Request)
 		{
-			console.log("Невозможно создать XMLHttpRequest");
+			console.error("Невозможно создать XMLHttpRequest");
 		}
         this.#Req=Request;
 	}
@@ -190,7 +190,6 @@ class jax{
                             case 'url': this.#body=this.#convertObjToUrlOrData(this.#params.data); break;
                         }
                     } else if (this.#params.data instanceof Object) {
-                        console.log(this.#params.data);
                         switch (sendType) {
                             case 'json': this.#body=JSON.stringify(this.#params.data,this.#jsonMapReplacer); break;
                             case 'form': this.#body=this.#convertObjToUrlOrData(this.#params.data,true); break;
@@ -241,7 +240,6 @@ class jax{
             }.bind(this));
             this.#Req.open(this.#method,this.#url,true);
             for(let [key,value] of this.#headers){
-                console.log(key+":"+value);
                 this.#Req.setRequestHeader(key,value);
             }
             try{
@@ -252,9 +250,6 @@ class jax{
             }
         });
     }
-
-
-
 
     /**
      * 
