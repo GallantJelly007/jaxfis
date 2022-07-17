@@ -136,7 +136,7 @@ class jax{
         }
     }
 
-    static #convertParams(){
+    static #convertParams(file=false){
         try {
             if (typeof this.#params?.credentials === 'boolean') this.#Req.withCredentials = this.#params.credentials;
             
@@ -166,7 +166,18 @@ class jax{
                         }
                     } 
                 }
-            } else {
+            }else if(file && this.#params?.files!=undefined && this.#params?.files!=null){
+                this.#headers.delete('Content-type');
+                let form = new FormData();  
+                if(this.#params.files instanceof File){
+                    form.append('files[]',this.#params.files);
+                }else if(this.#params.files instanceof FileList){
+                    for(let file of this.#params.files){
+                        form.append('files[]',file);
+                    }
+                }
+                this.#body=form;
+            }else{
                 let sendType='url';
                 this.#headers.set('Content-type','application/x-www-form-urlencoded'); 
                 if (typeof this.#params?.sendType === 'string') {
@@ -176,6 +187,7 @@ class jax{
                         default: sendType='url'; this.#headers.set('Content-type','application/x-www-form-urlencoded') ;
                     }
                 }
+                
                 if (this.#params?.data != undefined && this.#params?.data != null) {
                     if (this.#params.data instanceof FormData) {
                         switch (sendType) {
@@ -204,6 +216,8 @@ class jax{
                             case 'url': this.#body=this.#convertDataToUrlOrObject(data); break;
                         } 
                     } 
+                }else{
+                    return false;
                 }
             }
            
@@ -217,7 +231,6 @@ class jax{
             }
             if(this.#Req.responseType=='') this.#Req.responseType='json';
             if(typeof this.#params?.progress === 'function') this.#Req.upload.onprogress=this.#params.progress;
-            
             return true;
         } catch(err) {
             console.error(err);
@@ -421,6 +434,48 @@ class jax{
             return this.#send();
         }
     } 
+    
+
+    /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {File|FileList} params.files
+     * Коллекция отправляемых файлов (Обязательный параметр)
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки DELETE-запроса
+     */
+    static async file(url,params){
+        this.#params=params;
+        this.#url=url;
+        this.#method='POST';
+        this.#create();
+        if(this.#convertParams(true)){
+            return this.#send();
+        }
+    }
+
 }
 
 
