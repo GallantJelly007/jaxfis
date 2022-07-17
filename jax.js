@@ -167,7 +167,8 @@ class jax{
                     } 
                 }
             } else {
-                let sendType;
+                let sendType='url';
+                this.#headers.set('Content-type','application/x-www-form-urlencoded'); 
                 if (typeof this.#params?.sendType === 'string') {
                     switch (this.#params.sendType) {
                         case 'json': sendType='json'; this.#headers.set('Content-type','application/json; charset=utf-8'); break;
