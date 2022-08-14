@@ -1,36 +1,45 @@
 class jax{
 
-	static #Req = null;
+	static #req = null;
     static #params = null;
     static #method = null;
     static #headers=new Map();
     static #body=null;
     static #url=null;
+    static #responseType=null;
+    static #isServer = typeof window ==='undefined';
+    static #protocol ='https';
     static #responseTypes =['text','arraybuffer','json','blob','document'];
 
 	static #create(){
-		let Request = false;
+		let request = false;
 		if (window.XMLHttpRequest)
 		{
-			Request = new XMLHttpRequest();
+			request = new XMLHttpRequest();
 		}
 		else if (window.ActiveXObject)
 		{
 			try
 			{
-				Request = new ActiveXObject("Microsoft.XMLHTTP");
+				request = new ActiveXObject("Microsoft.XMLHTTP");
 			}    
 			catch (CatchException)
 			{
-				Request = new ActiveXObject("Msxml2.XMLHTTP");
+				request = new ActiveXObject("Msxml2.XMLHTTP");
 			}
 		}
-		if (!Request)
+		if (!request)
 		{
-			console.error("Невозможно создать XMLHttpRequest");
+			console.error("Unable create XMLHttpRequest");
+            return false;
 		}
-        this.#Req=Request;
+        this.#req=request;
+        return true;
 	}
+
+    static setSSL(isSet=true){
+        this.#protocol = isSet?'https':'http'
+    } 
 
     static #jsonMapReplacer(key, value){
         if (value instanceof Map) {
@@ -138,7 +147,9 @@ class jax{
 
     static #convertParams(file=false){
         try {
-            if (typeof this.#params?.credentials === 'boolean') this.#Req.withCredentials = this.#params.credentials;
+            if (typeof this.#params?.credentials === 'boolean' && !this.#isServer) {
+                this.#req.withCredentials = this.#params.credentials;
+            }
             
             if (this.#params?.headers != undefined && this.#params?.headers != undefined) {
                 for (let [key,value] of this.#params.headers) {
@@ -150,33 +161,37 @@ class jax{
             if (this.#method == 'GET' || this.#method == 'DELETE') {  
                 this.#headers.set('Content-type','application/x-www-form-urlencoded');
                 if(this.#params?.data != undefined && this.#params?.data != null){
-                    if (this.#params.data instanceof FormData) {
+                    if (!this.#isServer&&this.#params.data instanceof FormData) {
                         this.#url+='?'+this.#convertDataToUrlOrObject(this.#params.data);
                     } else if (this.#params.data instanceof Map) {
-                        this.#url+=+'?'+this.#convertObjToUrlOrData(this.#params.data).bind(this);
+                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data).bind(this);
                     } else if (this.#params.data instanceof Object) {
-                        this.#url+=+'?'+this.#convertObjToUrlOrData(this.#params.data);
+                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data);
                     } else if (this.#params.data instanceof HTMLElement||typeof this.#params.data === 'string') {
                         let container = this.#params.data instanceof HTMLElement?this.#params.data:document.getElementById(this.#params.data);
                         if(!this.#checkInputTypeFile(container)){
                             let data = new FormData(container);
-                            this.#url+=+'?'+this.#convertDataToUrlOrObject(data);
+                            this.#url+='?'+this.#convertDataToUrlOrObject(data);
                         }else{
                             console.error('File cannot be sent by the GET method');
                         }
                     } 
                 }
             }else if(file && this.#params?.files!=undefined && this.#params?.files!=null){
-                this.#headers.delete('Content-type');
-                let form = new FormData();  
-                if(this.#params.files instanceof File){
-                    form.append('files[]',this.#params.files);
-                }else if(this.#params.files instanceof FileList){
-                    for(let file of this.#params.files){
-                        form.append('files[]',file);
+                if(!this.#isServer){
+                    this.#headers.delete('Content-type');
+                    let form = new FormData();
+                    if (this.#params.files instanceof File) {
+                        form.append('files[]', this.#params.files);
+                    } else if (this.#params.files instanceof FileList) {
+                        for (let file of this.#params.files) {
+                            form.append('files[]', file);
+                        }
                     }
+                    this.#body = form;
+                }else{
+                    //Дописать метод для отправки файла
                 }
-                this.#body=form;
             }else{
                 let sendType='url';
                 this.#headers.set('Content-type','application/x-www-form-urlencoded'); 
@@ -189,7 +204,7 @@ class jax{
                 }
                 
                 if (this.#params?.data != undefined && this.#params?.data != null) {
-                    if (this.#params.data instanceof FormData) {
+                    if (!this.#isServer&&this.#params.data instanceof FormData) {
                         switch (sendType) {
                             case 'json': this.#body=JSON.stringify(this.#convertDataToUrlOrObject(this.#params.data,true)); break;
                             case 'form': this.#body=this.#params.data; break;
@@ -207,7 +222,7 @@ class jax{
                             case 'form': this.#body=this.#convertObjToUrlOrData(this.#params.data,true); break;
                             case 'url': this.#body=this.#convertObjToUrlOrData(this.#params.data); break;
                         }  
-                    } else if (this.#params.data instanceof HTMLElement||typeof this.#params.data === 'string') {
+                    } else if (this.#params.data instanceof HTMLElement&&!this.#isServer||typeof this.#params.data === 'string'&&!this.#isServer) {
                         let container = this.#params.data instanceof HTMLElement?this.#params.data:document.getElementById(this.#params.data);
                         let data = new FormData(container);
                         switch (sendType) {
@@ -224,13 +239,15 @@ class jax{
             if(typeof this.#params?.responseType ==='string'){
                 for(let item of this.#responseTypes){
                     if(this.#params.responseType==item){
-                        this.#Req.responseType=item;
+                        if(this.#isServer) this.#responseType=item;
+                        else this.#req.responseType=item;
                         break;
                     }
                 }
             }
-            if(this.#Req.responseType=='') this.#Req.responseType='json';
-            if(typeof this.#params?.progress === 'function') this.#Req.upload.onprogress=this.#params.progress;
+            if(this.#req!=null&&this.#req.responseType==''&&!this.#isServer) this.#req.responseType='json';
+            if(this.#responseType==''&&this.#isServer) this.#responseType='json';
+            if(typeof this.#params?.progress === 'function'&&!this.#isServer) this.#req.upload.onprogress=this.#params.progress;
             return true;
         } catch(err) {
             console.error(err);
@@ -238,9 +255,92 @@ class jax{
         }
     }
 
+    static async #sendServer(){
+        return new Promise((resolve, reject) => {
+            let options, http, data = [];
+            try {
+                let str = this.#url.replace(/^(http:\/\/|https:\/\/)/,'');
+                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',Buffer.byteLength(this.#body));
+                http = require(this.#protocol);
+                str = str.split('/');
+                let host = str.shift();
+                let url = str.join('/')
+                options = {
+                    hostname: host,
+                    port: this.#protocol == 'http' ? 80 : 443,
+                    path: `/${url}`,
+                    method: this.#method,
+                    headers: Object.fromEntries(this.#headers)
+                }
+                const req = http.request(options, (res) => {
+                    res.on('data', (chunk) => {
+                        data.push(chunk);
+                    })
+                    res.on('end', () => {
+                        let result;
+                        this.#params = null;
+                        this.#method = null;
+                        this.#headers.clear();
+                        this.#body = null;
+                        this.#url = null;
+                        if(data.length){
+                            switch (this.#responseType) {
+                                case 'text': {
+                                    if(data.length==1) result=data[0].toString('utf8')
+                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    break
+                                }
+                                case 'arraybuffer': {
+                                    if(data.length==1) result=data[0]
+                                    else result = data.reduce((pValue, cValue) => pValue.concat(cValue));
+                                    break
+                                }
+                                case 'json': {
+                                    if(data.length==1) result=data[0].toString('utf8')
+                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    result = JSON.parse(result);
+                                    break
+                                }
+                                case 'document': {
+                                    if(data.length==1) result=data[0].toString('utf8')
+                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    break
+                                }
+                                case 'blob': {
+                                    if(data.length==1) result=data[0]
+                                    else result = data.reduce((pValue, cValue) => pValue.concat(cValue));
+                                    result = new Blob(result)
+                                    break
+                                }
+                                default: {
+                                    if(data.length==1) result=data[0].toString('utf8')
+                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    break
+                                }
+                            }
+                            resolve(result)
+                        }else{
+                            resolve(res.statusCode)
+                        }
+                        this.#responseType=null;
+                    });
+                })
+                req.on('error', (e) => {
+                    console.error(e);
+                    reject(e);
+                })
+                if(this.#method=='POST'||this.#method=='PUT') req.write(this.#body);
+                req.end();
+            } catch (e) {
+                console.error('Unable send request, URL error')
+                reject(e)
+            }
+        })
+    }
+
     static async #send(){
         return new Promise((resolve,reject)=>{
-            this.#Req.addEventListener('load',function(Request){
+            this.#req.addEventListener('load',function(Request){
                 this.#params = null;
                 this.#method = null;
                 this.#headers.clear();
@@ -248,20 +348,31 @@ class jax{
                 this.#url=null;
                 resolve(Request.target.response);
             }.bind(this));
-            this.#Req.addEventListener('error',function(err){
+            this.#req.addEventListener('error',function(err){
                 reject("Error: send failed");
             }.bind(this));
-            this.#Req.open(this.#method,this.#url,true);
+            this.#req.open(this.#method,this.#url,true);
             for(let [key,value] of this.#headers){
-                this.#Req.setRequestHeader(key,value);
+                this.#req.setRequestHeader(key,value);
             }
             try{
-                if(this.#method=='POST'||this.#method=='PUT') this.#Req.send(this.#body);
-                else this.#Req.send(null);
+                if(this.#method=='POST'||this.#method=='PUT') this.#req.send(this.#body);
+                else this.#req.send(null);
             }catch(err){
                 reject(err);
             }
         });
+    }
+
+    static async #executeRequest(url,params,file=false){
+        this.#params=params;
+        this.#url=url;
+        if(this.#isServer){
+            if(this.#convertParams(file)) return this.#sendServer();
+        }else{
+            this.#create(); 
+            if(this.#convertParams(file)) return this.#send();
+        }
     }
 
     /**
@@ -298,19 +409,14 @@ class jax{
      * Устанавливает WithCredentials для кросс-доменных запросов
      * 
      * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки POST-запроса
      */
 
     static async post(url,params){
-        this.#params=params;
-        this.#url=url;
         this.#method='POST';
-        this.#create();
-        if(this.#convertParams()){
-            return this.#send();
-        }
+        return this.#executeRequest(url,params);
     }
     /**
      * 
@@ -336,18 +442,13 @@ class jax{
      * @param {boolean|undefined} params.credentials 
      * Устанавливает WithCredentials для кросс-доменных запросов
      * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки GET-запроса
      */
     static async get(url,params){
-        this.#params=params;
-        this.#url=url;
         this.#method='GET';
-        this.#create(); 
-        if(this.#convertParams()){
-            return this.#send();
-        }
+        return this.#executeRequest(url,params);
     }
    /**
      * 
@@ -383,18 +484,13 @@ class jax{
      * Устанавливает WithCredentials для кросс-доменных запросов
      * 
      * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки PUT-запроса
      */
     static async put(url,params){
-        this.#params=params;
-        this.#url=url;
         this.#method='PUT';
-        this.#create();
-        if(this.#convertParams()){
-            return this.#send();
-        }
+        return this.#executeRequest(url,params);
     }
     /**
      * 
@@ -421,18 +517,13 @@ class jax{
      * Устанавливает WithCredentials для кросс-доменных запросов
      * 
      * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки DELETE-запроса
      */
     static async delete(url,params){
-        this.#params=params;
-        this.#url=url;
         this.#method='DELETE';
-        this.#create();
-        if(this.#convertParams()){
-            return this.#send();
-        }
+        return this.#executeRequest(url,params);
     } 
     
 
@@ -462,22 +553,19 @@ class jax{
      * Устанавливает WithCredentials для кросс-доменных запросов
      * 
      * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
      * @desc Метод для отправки DELETE-запроса
      */
     static async file(url,params){
-        this.#params=params;
-        this.#url=url;
         this.#method='POST';
-        this.#create();
-        if(this.#convertParams(true)){
-            return this.#send();
-        }
+        return this.#executeRequest(url,params,true);
     }
-
 }
 
 
+if(typeof window ==='undefined'){
+    module.exports=jax
+}
 
 
