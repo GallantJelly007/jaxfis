@@ -290,6 +290,7 @@ class jax{
                                     else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
                                     break
                                 }
+                                case 'blob':
                                 case 'arraybuffer': {
                                     if(data.length==1) result=data[0]
                                     else {
@@ -310,12 +311,6 @@ class jax{
                                 case 'document': {
                                     if(data.length==1) result=data[0].toString('utf8')
                                     else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
-                                    break
-                                }
-                                case 'blob': {
-                                    if(data.length==1) result=data[0]
-                                    else result = data.reduce((pValue, cValue) => pValue.concat(cValue));
-                                    result = new Blob(result)
                                     break
                                 }
                                 default: {
