@@ -292,7 +292,13 @@ class jax{
                                 }
                                 case 'arraybuffer': {
                                     if(data.length==1) result=data[0]
-                                    else result = data.reduce((pValue, cValue) => pValue.concat(cValue));
+                                    else {
+                                        let totalLength=0
+                                        for(let item of data){
+                                            totalLength+=item.length
+                                        }
+                                        result = Buffer.concat(data,totalLength)
+                                    }
                                     break
                                 }
                                 case 'json': {
