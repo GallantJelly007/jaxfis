@@ -246,7 +246,7 @@ class jax{
                 }
             }
             if(this.#req!=null&&this.#req.responseType==''&&!this.#isServer) this.#req.responseType='json';
-            if(this.#responseType==''&&this.#isServer) this.#responseType='json';
+            if(this.#responseType==null&&this.#isServer) this.#responseType='json';
             if(typeof this.#params?.progress === 'function'&&!this.#isServer) this.#req.upload.onprogress=this.#params.progress;
             return true;
         } catch(err) {
@@ -286,13 +286,13 @@ class jax{
                         if(data.length){
                             switch (this.#responseType) {
                                 case 'text': {
-                                    if(data.length==1) result=data[0].toString('utf8')
-                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    if(data.length==1) { result=data[0].toString('utf8') }
+                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
                                 }
                                 case 'blob':
                                 case 'arraybuffer': {
-                                    if(data.length==1) result=data[0]
+                                    if(data.length==1) {result=data[0]}
                                     else {
                                         let totalLength=0
                                         for(let item of data){
@@ -303,19 +303,20 @@ class jax{
                                     break
                                 }
                                 case 'json': {
-                                    if(data.length==1) result=data[0].toString('utf8')
-                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    if(data.length==1) { result=data[0].toString('utf8') }
+                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     result = JSON.parse(result);
+
                                     break
                                 }
                                 case 'document': {
-                                    if(data.length==1) result=data[0].toString('utf8')
-                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    if(data.length==1) { result=data[0].toString('utf8') }
+                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
                                 }
                                 default: {
-                                    if(data.length==1) result=data[0].toString('utf8')
-                                    else result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8'));
+                                    if(data.length==1) { result=data[0].toString('utf8') }
+                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
                                 }
                             }
