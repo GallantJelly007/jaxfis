@@ -1,17 +1,220 @@
 class jax{
+    /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {object|FormData|Map|undefined} params.data
+     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {string|undefined} params.sendType
+     * Тип отправки данных, устанавливает ContentType заголовок, поэтому его не нужно передавать в headers, типы отправки:
+     * 
+     * url - (По умолчанию) Отправляет данные как URL-строку
+     * 
+     * json - Отправляет данные в JSON формате с заголовком application/json
+     * 
+     * form - Отправляет данные с помощью FormData и заголовком multipart/form-data
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки POST-запроса
+     */
 
-	static #req = null;
-    static #params = null;
-    static #method = null;
-    static #headers=new Map();
-    static #body=null;
-    static #url=null;
-    static #responseType=null;
-    static #isServer = typeof window ==='undefined';
-    static #protocol ='https';
-    static #responseTypes =['text','arraybuffer','json','blob','document'];
+    static async post(url,params){
+        let request = new JaxRequest('POST')
+        return request.executeRequest(url,params);
+    }
+    /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {object|FormData|Map|undefined} params.data
+     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки GET-запроса
+     */
+    static async get(url,params){
+        let request = new JaxRequest('GET')
+        return request.executeRequest(url,params);
+    }
+   /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {object|FormData|Map|undefined} params.data
+     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {string|undefined} params.sendType
+     * Тип отправки данных, устанавливает ContentType заголовок, поэтому его не нужно передавать в headers, типы отправки:
+     * 
+     * url - (По умолчанию) Отправляет данные как URL-строку
+     * 
+     * json - Отправляет данные в JSON формате с заголовком application/json
+     * 
+     * form - Отправляет данные с помощью FormData и заголовком multipart/form-data
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки PUT-запроса
+     */
+    static async put(url,params){
+        let request = new JaxRequest('PUT')
+        return request.executeRequest(url,params);
+    }
+    /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {object|FormData|Map|undefined} params.data
+     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки DELETE-запроса
+     */
+    static async delete(url,params){
+        let request = new JaxRequest('DELETE')
+        return request.executeRequest(url,params);
+    } 
+    
 
-	static #create(){
+    /**
+     * 
+     * @param {string} url 
+     * @param {object} params 
+     * @param {Map<string,string>|undefined} params.headers 
+     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
+     * @param {string|undefined} params.responseType 
+     * Тип ответа от сервера:
+     * 
+     * json - (По умолчанию) JSON-объект
+     * 
+     * text - Обычный текст
+     * 
+     * arraybuffer - Данные в ArrayBuffer
+     * 
+     * blob - Данные в Blob
+     * 
+     * document - Данные как XML/HTTP документ
+     * 
+     * @param {File|FileList} params.files
+     * Коллекция отправляемых файлов (Обязательный параметр)
+     * 
+     * @param {boolean|undefined} params.credentials 
+     * Устанавливает WithCredentials для кросс-доменных запросов
+     * 
+     * @param {function} params.progress
+     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
+     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @desc Метод для отправки DELETE-запроса
+     */
+    static async file(url,params){
+        let request = new JaxRequest('POST')
+        return request.executeRequest(url,params,true);
+    }
+}
+
+class JaxRequest{
+    #req = null;
+    #params = null;
+    #method = null;
+    #headers=new Map();
+    #body=null;
+    #url=null;
+    #responseType=null;
+    #isServer = typeof window ==='undefined';
+    #protocol ='https';
+    #responseTypes =['text','arraybuffer','json','blob','document'];
+
+    constructor(method){
+        this.#method=method
+    }
+
+    async executeRequest(url,params,file=false){
+        this.#params=params;
+        this.#url=url;
+        if(this.#isServer){
+            if(this.#convertParams(file)) return this.#sendServer();
+        }else{
+            this.#create(); 
+            if(this.#convertParams(file)) return this.#send();
+        }
+    }
+
+	#create(){
 		let request = false;
 		if (window.XMLHttpRequest)
 		{
@@ -37,11 +240,11 @@ class jax{
         return true;
 	}
 
-    static setSSL(isSet=true){
+    setSSL(isSet=true){
         this.#protocol = isSet?'https':'http'
     } 
 
-    static #jsonMapReplacer(key, value){
+    #jsonMapReplacer(key, value){
         if (value instanceof Map) {
             return {
                 dataType: 'Map',
@@ -52,7 +255,7 @@ class jax{
         }
     }
 
-    static #jsonMapReviewer(key, value) {
+    #jsonMapReviewer(key, value) {
         if(typeof value === 'object' && value !== null) {
             if (value.dataType === 'Map') {
                 return new Map(value.value);
@@ -61,7 +264,7 @@ class jax{
         return value;
     }
 
-    static #checkInputTypeFile(el){
+    #checkInputTypeFile(el){
         let inputs = el.getElementsByTagName('input');
         for(let item of inputs){
             if(item.type=='file') return true;
@@ -69,7 +272,7 @@ class jax{
         return false;
     }
 
-    static #convertObjToUrlOrData(data,formData=false){
+    #convertObjToUrlOrData(data,formData=false){
         let result = formData?new FormData():[];
         try{
             if(data instanceof Map) data = Object.fromEntries(data);
@@ -103,7 +306,7 @@ class jax{
         }
     }
 
-    static #convertDataToUrlOrObject(data,toObj=false){
+    #convertDataToUrlOrObject(data,toObj=false){
         try{
             if(data instanceof FormData){
                 let url;
@@ -145,7 +348,7 @@ class jax{
         }
     }
 
-    static #convertParams(file=false){
+    #convertParams(file=false){
         try {
             if (typeof this.#params?.credentials === 'boolean' && !this.#isServer) {
                 this.#req.withCredentials = this.#params.credentials;
@@ -255,7 +458,7 @@ class jax{
         }
     }
 
-    static async #sendServer(){
+    async #sendServer(){
         return new Promise((resolve, reject) => {
             let options, http, data = [];
             try {
@@ -306,7 +509,6 @@ class jax{
                                     if(data.length==1) { result=data[0].toString('utf8') }
                                     else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     result = JSON.parse(result);
-
                                     break
                                 }
                                 case 'document': {
@@ -320,27 +522,27 @@ class jax{
                                     break
                                 }
                             }
-                            resolve(result)
+                            resolve({data:result,success:true})
                         }else{
-                            resolve(res.statusCode)
+                            resolve({success:true})
                         }
                         this.#responseType=null;
                     });
                 })
                 req.on('error', (e) => {
                     console.error(e);
-                    reject(e);
+                    reject({success:false, err:e});
                 })
                 if(this.#method=='POST'||this.#method=='PUT') req.write(this.#body);
                 req.end();
             } catch (e) {
                 console.error('Unable send request, URL error')
-                reject(e)
+                reject({success:false, err:e})
             }
         })
     }
 
-    static async #send(){
+    async #send(){
         return new Promise((resolve,reject)=>{
             this.#req.addEventListener('load',function(Request){
                 this.#params = null;
@@ -364,204 +566,6 @@ class jax{
                 reject(err);
             }
         });
-    }
-
-    static async #executeRequest(url,params,file=false){
-        this.#params=params;
-        this.#url=url;
-        if(this.#isServer){
-            if(this.#convertParams(file)) return this.#sendServer();
-        }else{
-            this.#create(); 
-            if(this.#convertParams(file)) return this.#send();
-        }
-    }
-
-    /**
-     * 
-     * @param {string} url 
-     * @param {object} params 
-     * @param {Map<string,string>|undefined} params.headers 
-     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} params.data
-     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
-     * @param {string|undefined} params.responseType 
-     * Тип ответа от сервера:
-     * 
-     * json - (По умолчанию) JSON-объект
-     * 
-     * text - Обычный текст
-     * 
-     * arraybuffer - Данные в ArrayBuffer
-     * 
-     * blob - Данные в Blob
-     * 
-     * document - Данные как XML/HTTP документ
-     * 
-     * @param {string|undefined} params.sendType
-     * Тип отправки данных, устанавливает ContentType заголовок, поэтому его не нужно передавать в headers, типы отправки:
-     * 
-     * url - (По умолчанию) Отправляет данные как URL-строку
-     * 
-     * json - Отправляет данные в JSON формате с заголовком application/json
-     * 
-     * form - Отправляет данные с помощью FormData и заголовком multipart/form-data
-     * 
-     * @param {boolean|undefined} params.credentials 
-     * Устанавливает WithCredentials для кросс-доменных запросов
-     * 
-     * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки POST-запроса
-     */
-
-    static async post(url,params){
-        this.#method='POST';
-        return this.#executeRequest(url,params);
-    }
-    /**
-     * 
-     * @param {string} url 
-     * @param {object} params 
-     * @param {Map<string,string>|undefined} params.headers 
-     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} params.data
-     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
-     * @param {string|undefined} params.responseType 
-     * Тип ответа от сервера:
-     * 
-     * json - (По умолчанию) JSON-объект
-     * 
-     * text - Обычный текст
-     * 
-     * arraybuffer - Данные в ArrayBuffer
-     * 
-     * blob - Данные в Blob
-     * 
-     * document - Данные как XML/HTTP документ
-     * 
-     * @param {boolean|undefined} params.credentials 
-     * Устанавливает WithCredentials для кросс-доменных запросов
-     * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки GET-запроса
-     */
-    static async get(url,params){
-        this.#method='GET';
-        return this.#executeRequest(url,params);
-    }
-   /**
-     * 
-     * @param {string} url 
-     * @param {object} params 
-     * @param {Map<string,string>|undefined} params.headers 
-     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} params.data
-     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
-     * @param {string|undefined} params.responseType 
-     * Тип ответа от сервера:
-     * 
-     * json - (По умолчанию) JSON-объект
-     * 
-     * text - Обычный текст
-     * 
-     * arraybuffer - Данные в ArrayBuffer
-     * 
-     * blob - Данные в Blob
-     * 
-     * document - Данные как XML/HTTP документ
-     * 
-     * @param {string|undefined} params.sendType
-     * Тип отправки данных, устанавливает ContentType заголовок, поэтому его не нужно передавать в headers, типы отправки:
-     * 
-     * url - (По умолчанию) Отправляет данные как URL-строку
-     * 
-     * json - Отправляет данные в JSON формате с заголовком application/json
-     * 
-     * form - Отправляет данные с помощью FormData и заголовком multipart/form-data
-     * 
-     * @param {boolean|undefined} params.credentials 
-     * Устанавливает WithCredentials для кросс-доменных запросов
-     * 
-     * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки PUT-запроса
-     */
-    static async put(url,params){
-        this.#method='PUT';
-        return this.#executeRequest(url,params);
-    }
-    /**
-     * 
-     * @param {string} url 
-     * @param {object} params 
-     * @param {Map<string,string>|undefined} params.headers 
-     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} params.data
-     * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
-     * @param {string|undefined} params.responseType 
-     * Тип ответа от сервера:
-     * 
-     * json - (По умолчанию) JSON-объект
-     * 
-     * text - Обычный текст
-     * 
-     * arraybuffer - Данные в ArrayBuffer
-     * 
-     * blob - Данные в Blob
-     * 
-     * document - Данные как XML/HTTP документ
-     * 
-     * @param {boolean|undefined} params.credentials 
-     * Устанавливает WithCredentials для кросс-доменных запросов
-     * 
-     * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки DELETE-запроса
-     */
-    static async delete(url,params){
-        this.#method='DELETE';
-        return this.#executeRequest(url,params);
-    } 
-    
-
-    /**
-     * 
-     * @param {string} url 
-     * @param {object} params 
-     * @param {Map<string,string>|undefined} params.headers 
-     * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {string|undefined} params.responseType 
-     * Тип ответа от сервера:
-     * 
-     * json - (По умолчанию) JSON-объект
-     * 
-     * text - Обычный текст
-     * 
-     * arraybuffer - Данные в ArrayBuffer
-     * 
-     * blob - Данные в Blob
-     * 
-     * document - Данные как XML/HTTP документ
-     * 
-     * @param {File|FileList} params.files
-     * Коллекция отправляемых файлов (Обязательный параметр)
-     * 
-     * @param {boolean|undefined} params.credentials 
-     * Устанавливает WithCredentials для кросс-доменных запросов
-     * 
-     * @param {function} params.progress
-     * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки DELETE-запроса
-     */
-    static async file(url,params){
-        this.#method='POST';
-        return this.#executeRequest(url,params,true);
     }
 }
 
