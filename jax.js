@@ -1,4 +1,6 @@
 class jax{
+
+    static isServer = typeof window ==='undefined'
     /**
      * 
      * @param {string} url 
@@ -195,7 +197,7 @@ class JaxRequest{
     #body=null;
     #url=null;
     #responseType=null;
-    #isServer = typeof window ==='undefined';
+    #isServer = jax.isServer;
     #protocol ='https';
     #responseTypes =['text','arraybuffer','json','blob','document'];
 
@@ -573,5 +575,6 @@ class JaxRequest{
 if(typeof window ==='undefined'){
     module.exports=jax
 }
+export default jax
 
 
