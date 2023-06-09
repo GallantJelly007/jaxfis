@@ -1,0 +1,26 @@
+{
+  "name":"jax",
+  "version":"1.0.0",
+  "main":"index.js",
+  "description":"Library for executing Ajax requests on the server and client side",
+  "author": {
+    "name": "Alex Filatov",
+    "email": "alariel007@gmail.com"
+  },
+  "license": "AAL",
+  "keywords": [
+    "ajax",
+    "AJAX",
+    "async",
+    "http",
+    "https",
+    "jax"
+  ],
+  "repository": {
+    "type":"git",
+    "url":""
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.3"
+  }
+}
