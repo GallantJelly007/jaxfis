@@ -1,13 +1,27 @@
+//@ts-check
 class jax{
 
+    /** Переменная для определения отправляется ли запрос с серверного приложения или клиента(браузера) */
     static isServer = typeof window ==='undefined'
+    /** Использовать ли вместо XMLHTTPRequest FetchAPI */
+    static useFetch = false
+    /**
+     * Типы ответа используемые при отправке запроса
+     */
+    static responseTypes={
+        TEXT:'text',
+        BUFFER:'arraybuffer',
+        JSON:'json',
+        BLOB:'blob',
+        DOC:'document'
+    }
     /**
      * 
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} params.headers 
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} params.data
+     * @param {object|FormData|Map|HTMLElement|string|undefined} params.data
      * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} params.responseType 
      * Тип ответа от сервера:
@@ -190,56 +204,60 @@ class jax{
 }
 
 class JaxRequest{
-    #req = null;
-    #params = null;
-    #method = null;
-    #headers=new Map();
-    #body=null;
-    #url=null;
-    #responseType=null;
-    #isServer = jax.isServer;
-    #protocol ='https';
-    #responseTypes =['text','arraybuffer','json','blob','document'];
+    #req
+    #params
+    #method
+    #headers=new Map()
+    #body
+    #url
+    #responseType
+    #isServer = jax.isServer
+    #protocol ='https'
+    #responseTypes =['text','arraybuffer','json','blob','document']
 
     constructor(method){
         this.#method=method
     }
 
     async executeRequest(url,params,file=false){
-        this.#params=params;
-        this.#url=url;
+        this.#params=params
+        this.#url=url
         if(this.#isServer){
-            if(this.#convertParams(file)) return this.#sendServer();
+            if(this.#convertParams(file)) return this.#sendServer()
         }else{
-            this.#create(); 
-            if(this.#convertParams(file)) return this.#send();
+            this.#create()
+            if(this.#convertParams(file)){
+                if(jax.useFetch)
+                    return this.#sendFetch()
+                else
+                    return this.#send()
+            }
         }
     }
 
 	#create(){
-		let request = false;
+		let request = null
 		if (window.XMLHttpRequest)
 		{
-			request = new XMLHttpRequest();
+			request = new XMLHttpRequest()
 		}
 		else if (window.ActiveXObject)
 		{
 			try
 			{
-				request = new ActiveXObject("Microsoft.XMLHTTP");
+				request = new ActiveXObject("Microsoft.XMLHTTP")
 			}    
 			catch (CatchException)
 			{
-				request = new ActiveXObject("Msxml2.XMLHTTP");
+				request = new ActiveXObject("Msxml2.XMLHTTP")
 			}
 		}
 		if (!request)
 		{
-			console.error("Unable create XMLHttpRequest");
-            return false;
+            throw new Error("Unable create XMLHttpRequest")
 		}
-        this.#req=request;
-        return true;
+        this.#req=request
+        return true
 	}
 
     setSSL(isSet=true){
@@ -269,206 +287,255 @@ class JaxRequest{
     #checkInputTypeFile(el){
         let inputs = el.getElementsByTagName('input');
         for(let item of inputs){
-            if(item.type=='file') return true;
+            if(item.type=='file') return true
         }
-        return false;
+        return false
     }
 
     #convertObjToUrlOrData(data,formData=false){
-        let result = formData?new FormData():[];
+        let result = formData ? new FormData() : new Array()
         try{
-            if(data instanceof Map) data = Object.fromEntries(data);
+            if(data instanceof Map) data = Object.fromEntries(data)
             if(data instanceof Object){
                 for(let key in data){
-                    let item = data[key];
-                    if(item instanceof Object||item instanceof Map){
-                        item=item instanceof Object?Object.entries(item):item;
-                        for(let [el,value] of item){
-                            if(formData) result.append(key+`[${el}]`,value.toString());
-                            else result.push(key+`[${el}]=`+encodeURIComponent(value.toString()));
+                    let item = data[key]
+                    if(item!==undefined){
+                        if(item instanceof Object||item instanceof Map){
+                            item=item instanceof Object?Object.entries(item):item
+                            for(let [el,value] of item){
+                                if(result instanceof FormData) result.append(`${key}[${el}]`,value.toString())
+                                else{
+                                    if(value==null) result.push(`${key}[${el}]=null`)
+                                    else result.push(`${key}[${el}]=${encodeURIComponent(value.toString())}`)
+                                }
+                            }
+                        }else if(Array.isArray(item)){
+                            for(let el of item){
+                                if(result instanceof FormData) result.append(`${key}[]`,el.toString())
+                                else{
+                                    if(el==null) result.push(`${key}[]=null`)  
+                                    else result.push(`${key}[]=${encodeURIComponent(el.toString())}`)   
+                                }
+                            }
+                        }else{
+                            if(result instanceof FormData) result.append(key,item.toString())
+                            else{
+                                if(item==null) result.push(`${key}=null`)  
+                                else result.push(`${key}=${encodeURIComponent(item.toString())}`)    
+                            }
                         }
-                    }else if(Array.isArray(item)){
-                        for(let el of item){
-                            if(formData) result.append(key+`[]`,el.toString());
-                            else result.push(key+'[]='+encodeURIComponent(el.toString()));
-                        }
-                    }else{
-                        if(formData) result.append(key,item.toString());
-                        else result.push(key+'='+encodeURIComponent(item.toString()));
                     }
                 }
             }else{
-                return false;
+                return false
             }
-            if(!formData) result = result.join('&');
-            return result;
+            return Array.isArray(result)?result.join('&'):result
         }catch(err){
-            console.error(err);
-            return false;
+            throw err
         }
     }
 
     #convertDataToUrlOrObject(data,toObj=false){
         try{
             if(data instanceof FormData){
-                let url;
+                let url
                 if(toObj){
                     url={}
-                    let index=0;
+                    let index=0
                     for(let [key,value] of data.entries()){
                         if(/[\[\]]/gm.test(key)){
-                            let prop = key.match(/[\[]([\w]+)[\]]/);
+                            let prop = key.match(/[\[]([\w]+)[\]]/)
                             if(prop!=null&&prop.length>1){ 
-                                let name = key.replace(/[\[]([\w]+)[\]]/g,'');
-                                if(url[name]==undefined) url[name]={};
-                                url[name][prop[1]]=value;
+                                let name = key.replace(/[\[]([\w]+)[\]]/g,'')
+                                let obj = url[name]===undefined?{}:url[name]
+                                if(obj!==undefined)
+                                    obj[prop[1]]=value
+                                url[name]=obj
                             }else {
-                                let name = key.replace(/[\[\]]/g,'');
-                                if(url[name]==undefined) url[name]={};
-                                url[name][index.toString()]=value;
+                                let name = key.replace(/[\[\]]/g,'')
+                                let obj = url[name]===undefined?{}:url[name]
+                                if(obj!==undefined)
+                                    obj[index.toString()]=value
+                                url[name]=obj
                             }
-                            index++;
+                            index++
                         }else{
-                            url[key]=value;
+                            url[key]=value
                         }
                     }
-                    return url;
+                    return url
                 }else{
                     url=[];
                     for(let [key,value] of data.entries()){
-                        url.push(encodeURIComponent(key)+'='+encodeURIComponent(value));
+                        url.push(encodeURIComponent(key)+'='+encodeURIComponent(value.toString()))
                     }
-                    url=url.join('&');
+                    url=url.join('&')
                 }
-                return url;
+                return url
             }else{
-                return false;
+                return false
             }
         }catch(err){
-            console.error(err);
-            return false;
+            throw err
         }
     }
 
     #convertParams(file=false){
         try {
             if (typeof this.#params?.credentials === 'boolean' && !this.#isServer) {
-                this.#req.withCredentials = this.#params.credentials;
+                this.#req.withCredentials = this.#params.credentials
             }
             
-            if (this.#params?.headers != undefined && this.#params?.headers != undefined) {
+            if (this.#params?.headers !== undefined && this.#params?.headers !== undefined) {
                 for (let [key,value] of this.#params.headers) {
                     if (key.toLowerCase() != 'content-type') {
-                        this.#headers.set(key, value);
+                        this.#headers.set(key, value)
                     }
                 }
             }
             if (this.#method == 'GET' || this.#method == 'DELETE') {  
-                this.#headers.set('Content-type','application/x-www-form-urlencoded');
-                if(this.#params?.data != undefined && this.#params?.data != null){
-                    if (!this.#isServer&&this.#params.data instanceof FormData) {
-                        this.#url+='?'+this.#convertDataToUrlOrObject(this.#params.data);
+                this.#headers.set('Content-type','application/x-www-form-urlencoded')
+                if(this.#params?.data !== undefined && this.#params?.data !== null){
+                    if (!this.#isServer && this.#params.data instanceof FormData) {
+                        this.#url+='?'+this.#convertDataToUrlOrObject(this.#params.data)
                     } else if (this.#params.data instanceof Map) {
-                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data).bind(this);
+                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data)
                     } else if (this.#params.data instanceof Object) {
-                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data);
+                        this.#url+='?'+this.#convertObjToUrlOrData(this.#params.data)
                     } else if (this.#params.data instanceof HTMLElement||typeof this.#params.data === 'string') {
-                        let container = this.#params.data instanceof HTMLElement?this.#params.data:document.getElementById(this.#params.data);
-                        if(!this.#checkInputTypeFile(container)){
-                            let data = new FormData(container);
-                            this.#url+='?'+this.#convertDataToUrlOrObject(data);
+                        let container = this.#params.data instanceof HTMLElement ? this.#params.data : document.getElementById(this.#params.data)
+                        if(container && container.tagName.toLowerCase() == 'form'){
+                            if(container.querySelector('input[type="file"]')){
+                                throw new Error('Sending a file using the GET method is not possible')
+                            }
+                            let data = new FormData(container)
+                            this.#url+='?'+this.#convertDataToUrlOrObject(data)
                         }else{
-                            console.error('File cannot be sent by the GET method');
+                            throw new Error('The HTMLElement passed to the data parameter is not a form')
                         }
                     } 
                 }
-            }else if(file && this.#params?.files!=undefined && this.#params?.files!=null){
+            }else if(file && this.#params?.files!==undefined && this.#params?.files!==null){
                 if(!this.#isServer){
-                    this.#headers.delete('Content-type');
+                    this.#headers.delete('Content-type')
                     let form = new FormData();
                     if (this.#params.files instanceof File) {
-                        form.append('files[]', this.#params.files);
+                        form.append('files[]', this.#params.files)
                     } else if (this.#params.files instanceof FileList) {
                         for (let file of this.#params.files) {
-                            form.append('files[]', file);
+                            form.append('files[]', file)
                         }
                     }
-                    this.#body = form;
+                    this.#body = form
                 }else{
-                    //Дописать метод для отправки файла
+                    //Дописать метод для отправки файла для сервера
                 }
             }else{
-                let sendType='url';
-                this.#headers.set('Content-type','application/x-www-form-urlencoded'); 
+                let sendType='url'
+                this.#headers.set('Content-type','application/x-www-form-urlencoded');
                 if (typeof this.#params?.sendType === 'string') {
                     switch (this.#params.sendType) {
-                        case 'json': sendType='json'; this.#headers.set('Content-type','application/json; charset=utf-8'); break;
-                        case 'form': sendType='form'; this.#headers.set('Content-type','multipart/form-data') ; break;
-                        default: sendType='url'; this.#headers.set('Content-type','application/x-www-form-urlencoded') ;
+                        case 'json': 
+                            sendType='json'
+                            this.#headers.set('Content-type','application/json; charset=utf-8')
+                            break
+                        case 'form': 
+                            sendType='form' 
+                            this.#headers.set('Content-type','multipart/form-data')
+                            break
+                        default: 
+                            sendType='url' 
+                            this.#headers.set('Content-type','application/x-www-form-urlencoded')
+                            break
                     }
                 }
                 
                 if (this.#params?.data != undefined && this.#params?.data != null) {
                     if (!this.#isServer&&this.#params.data instanceof FormData) {
                         switch (sendType) {
-                            case 'json': this.#body=JSON.stringify(this.#convertDataToUrlOrObject(this.#params.data,true)); break;
-                            case 'form': this.#body=this.#params.data; break;
-                            case 'url': this.#body=this.#convertDataToUrlOrObject(this.#params.data); break;
+                            case 'json': 
+                                this.#body=JSON.stringify(this.#convertDataToUrlOrObject(this.#params.data,true))
+                                break
+                            case 'form': 
+                                this.#body=this.#params.data 
+                                break
+                            case 'url': 
+                                this.#body=this.#convertDataToUrlOrObject(this.#params.data) 
+                                break
                         }
                     } else if (this.#params.data instanceof Map) {
                         switch (sendType) {
-                            case 'json': this.#body=JSON.stringify(this.#params.data,this.#jsonMapReplacer); break;
-                            case 'form': this.#body=this.#convertObjToUrlOrData(this.#params.data,true); break;
-                            case 'url': this.#body=this.#convertObjToUrlOrData(this.#params.data); break;
+                            case 'json': 
+                                this.#body=JSON.stringify(this.#params.data,this.#jsonMapReplacer) 
+                                break
+                            case 'form': 
+                                this.#body=this.#convertObjToUrlOrData(this.#params.data,true) 
+                                break
+                            case 'url': 
+                                this.#body=this.#convertObjToUrlOrData(this.#params.data) 
+                                break
                         }
                     } else if (this.#params.data instanceof Object) {
                         switch (sendType) {
-                            case 'json': this.#body=JSON.stringify(this.#params.data,this.#jsonMapReplacer); break;
-                            case 'form': this.#body=this.#convertObjToUrlOrData(this.#params.data,true); break;
-                            case 'url': this.#body=this.#convertObjToUrlOrData(this.#params.data); break;
+                            case 'json': 
+                                this.#body=JSON.stringify(this.#params.data,this.#jsonMapReplacer) 
+                                break
+                            case 'form': 
+                                this.#body=this.#convertObjToUrlOrData(this.#params.data,true) 
+                                break
+                            case 'url': 
+                                this.#body=this.#convertObjToUrlOrData(this.#params.data) 
+                                break
                         }  
-                    } else if (this.#params.data instanceof HTMLElement&&!this.#isServer||typeof this.#params.data === 'string'&&!this.#isServer) {
-                        let container = this.#params.data instanceof HTMLElement?this.#params.data:document.getElementById(this.#params.data);
-                        let data = new FormData(container);
-                        switch (sendType) {
-                            case 'json': this.#body=JSON.stringify(this.#convertDataToUrlOrObject(data,true)); break;
-                            case 'form': this.#body = data; break;
-                            case 'url': this.#body=this.#convertDataToUrlOrObject(data); break;
-                        } 
+                    } else if (this.#params.data instanceof HTMLElement && !this.#isServer || typeof this.#params.data === 'string' && !this.#isServer) {
+                        let container = this.#params.data instanceof HTMLElement ? this.#params.data : document.getElementById(this.#params.data)
+                        if(container && container.tagName.toLowerCase()=='form'){
+                            let data = new FormData(container)
+                            switch (sendType) {
+                                case 'json': 
+                                    this.#body=JSON.stringify(this.#convertDataToUrlOrObject(data,true)) 
+                                    break
+                                case 'form': 
+                                    this.#body = data 
+                                    break
+                                case 'url': 
+                                    this.#body=this.#convertDataToUrlOrObject(data)
+                                    break
+                            } 
+                        }else{
+                            throw new Error('The HTMLElement passed to the data parameter is not a form or input')
+                        }
                     } 
-                }else{
-                    return false;
                 }
             }
            
             if(typeof this.#params?.responseType ==='string'){
                 for(let item of this.#responseTypes){
                     if(this.#params.responseType==item){
-                        if(this.#isServer) this.#responseType=item;
-                        else this.#req.responseType=item;
-                        break;
+                        if(this.#isServer) this.#responseType=item
+                        else this.#req.responseType=item
+                        break
                     }
                 }
             }
-            if(this.#req!=null&&this.#req.responseType==''&&!this.#isServer) this.#req.responseType='json';
-            if(this.#responseType==null&&this.#isServer) this.#responseType='json';
-            if(typeof this.#params?.progress === 'function'&&!this.#isServer) this.#req.upload.onprogress=this.#params.progress;
-            return true;
+            if(this.#req!=null&&this.#req.responseType==''&&!this.#isServer) this.#req.responseType='json'
+            if(this.#responseType==null&&this.#isServer) this.#responseType='json'
+            if(typeof this.#params?.progress === 'function'&&!this.#isServer) this.#req.upload.onprogress=this.#params.progress
+            return true
         } catch(err) {
-            console.error(err);
-            return false;
+            throw err
         }
     }
 
     async #sendServer(){
         return new Promise((resolve, reject) => {
-            let options, http, data = [];
+            let options, http, data = []
             try {
                 let str = this.#url.replace(/^(http:\/\/|https:\/\/)/,'');
-                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',Buffer.byteLength(this.#body));
-                http = require(this.#protocol);
-                str = str.split('/');
-                let host = str.shift();
+                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',Buffer.byteLength(this.#body))
+                http = require(this.#protocol)
+                str = str.split('/')
+                let host = str.shift()
                 let url = str.join('/')
                 options = {
                     hostname: host,
@@ -479,24 +546,23 @@ class JaxRequest{
                 }
                 const req = http.request(options, (res) => {
                     res.on('data', (chunk) => {
-                        data.push(chunk);
+                        data.push(chunk)
                     })
                     res.on('end', () => {
-                        let result;
-                        this.#params = null;
-                        this.#method = null;
-                        this.#headers.clear();
-                        this.#body = null;
-                        this.#url = null;
+                        let result
+                        this.#params = null
+                        this.#method = null
+                        this.#headers.clear()
+                        this.#body = null
+                        this.#url = null
                         if(data.length){
                             switch (this.#responseType) {
-                                case 'text': {
+                                case 'text': 
                                     if(data.length==1) { result=data[0].toString('utf8') }
                                     else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
-                                }
                                 case 'blob':
-                                case 'arraybuffer': {
+                                case 'arraybuffer': 
                                     if(data.length==1) {result=data[0]}
                                     else {
                                         let totalLength=0
@@ -506,75 +572,111 @@ class JaxRequest{
                                         result = Buffer.concat(data,totalLength)
                                     }
                                     break
-                                }
-                                case 'json': {
+                                
+                                case 'json': 
                                     if(data.length==1) { result=data[0].toString('utf8') }
                                     else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     result = JSON.parse(result);
                                     break
-                                }
-                                case 'document': {
+                                
+                                case 'document': 
                                     if(data.length==1) { result=data[0].toString('utf8') }
                                     else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
-                                }
-                                default: {
+                                
+                                default: 
                                     if(data.length==1) { result=data[0].toString('utf8') }
                                     else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
                                     break
-                                }
+                                
                             }
                             resolve({data:result,success:true})
                         }else{
                             resolve({success:true})
                         }
-                        this.#responseType=null;
+                        this.#responseType=null
                     });
                 })
-                req.on('error', (e) => {
-                    console.error(e);
-                    reject({success:false, err:e});
-                })
-                if(this.#method=='POST'||this.#method=='PUT') req.write(this.#body);
-                req.end();
-            } catch (e) {
-                console.error('Unable send request, URL error')
-                reject({success:false, err:e})
+                req.on('error', (err) => reject(err))
+                if(this.#method=='POST'||this.#method=='PUT') req.write(this.#body)
+                req.end()
+            } catch (err) {
+                reject(err)
             }
         })
     }
 
     async #send(){
         return new Promise((resolve,reject)=>{
-            this.#req.addEventListener('load',function(Request){
-                this.#params = null;
-                this.#method = null;
-                this.#headers.clear();
-                this.#body=null;
-                this.#url=null;
-                resolve(Request.target.response);
-            }.bind(this));
+            this.#req.addEventListener('load',function(ev){
+                this.#params = null
+                this.#method = null
+                this.#headers.clear()
+                this.#body=null
+                this.#url=null
+                resolve({data:ev.target.response,success:true})
+            }.bind(this))
+            this.#req.addEventListener('timeout', ()=>{
+                reject(new Error('Request timeout was reached!'))
+            })
             this.#req.addEventListener('error',function(err){
-                reject("Error: send failed");
-            }.bind(this));
-            this.#req.open(this.#method,this.#url,true);
+                reject(err)
+            }.bind(this))
+            this.#req.open(this.#method,this.#url,true)
             for(let [key,value] of this.#headers){
-                this.#req.setRequestHeader(key,value);
+                this.#req.setRequestHeader(key,value)
             }
             try{
-                if(this.#method=='POST'||this.#method=='PUT') this.#req.send(this.#body);
-                else this.#req.send(null);
+                if(this.#method=='POST'||this.#method=='PUT') this.#req.send(this.#body)
+                else this.#req.send(null)
             }catch(err){
-                reject(err);
+                reject(err)
             }
-        });
+        })
+    }
+
+    async #sendFetch(){
+        return new Promise((resolve,reject)=>{
+            let options = {}
+            if(this.#method=='POST'||this.#method=='PUT'){
+                options = {
+                    method:this.#method,
+                    headers:this.#headers,
+                    body:this.#body
+                }
+            }
+            fetch(this.#url,options)
+                .then(res => res.ok ? res : Promise.reject(res))
+                .then(async data => {
+                    switch(this.#responseType){
+                        case 'text': 
+                            return data.text()
+                        case 'blob':
+                            return data.blob()
+                        case 'arraybuffer':
+                            return data.arrayBuffer()
+                        case 'json':
+                            return data.blob()
+                        default:
+                            return data.text()
+                    }
+                }).then(result=>{
+                    let response = (this.#responseType == 'document' && typeof result == 'string') ?
+                        new DOMParser().parseFromString(result, 'text/html') :
+                        result
+                    this.#params = null
+                    this.#method = null
+                    this.#headers.clear()
+                    this.#body=null
+                    this.#url=null
+                    this.#responseType=null
+                    resolve({success:true,data:response})
+                })
+                .catch(err=>reject(err))
+        })
     }
 }
 
-
-if(typeof window ==='undefined'){
-    module.exports=jax
-}
 export default jax
 
 
