@@ -1,19 +1,23 @@
-//@ts-check
+import { JFile, JFileList, JFormData, JBuffer} from './classes.js'
 class Jax{
 
     /** Переменная для определения отправляется ли запрос с серверного приложения или клиента(браузера) */
     static isServer = typeof window ==='undefined'
     /** Использовать ли вместо XMLHTTPRequest FetchAPI */
     static useFetch = false
-    /**
-     * Типы ответа используемые при отправке запроса
-     */
+
     static #responseTypes={
         TEXT:'text',
         BUFFER:'arraybuffer',
         JSON:'json',
         BLOB:'blob',
         DOC:'document'
+    }
+
+    static #sendTypes={
+        URL:'url',
+        JSON:'json',
+        FORM:'form'
     }
 
     static #credentials = {
@@ -727,24 +731,40 @@ class Jax{
         ['application/vnd.zzazz.deck+xml','.zaz']
     ]);
 
-    static get RESPONSE(){
+    /**
+     * Типы ответа используемые при отправке запроса
+     */
+    static get RESPONSE_TYPES(){
         return Jax.#responseTypes
     }
 
+    /**
+     * Тип запроса
+     */
+    static get SEND_TYPES(){
+        return Jax.#sendTypes
+    }
+
+    /**
+     * Разрешения
+     */
     static get CREDENTIALS(){
         return Jax.#credentials
     }
 
+    /**
+     * Mime-типы данных
+     */
     static get MIME_FILES(){
         return Jax.#mimeFiles
     }
     /**
-     * 
+     * Асинхронная функция отправки POST-запроса
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers]
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|HTMLElement|string|undefined} params.body
+     * @param {object|JFormData|FormData|Map|HTMLFormElement|string|undefined} params.body
      * Объект, FormData, либо коллекция с данными для отправки на сервер. Так же можно использовать form HTMLElement или id элемента представляющего форму. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} [params.responseType] 
      * Тип ответа от сервера:
@@ -774,7 +794,6 @@ class Jax{
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки POST-запроса
      */
 
     static async post(url,params){
@@ -782,12 +801,12 @@ class Jax{
         return request.executeRequest(url,params);
     }
     /**
-     * 
+     * Асинхронная функция отправки GET-запроса
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers] 
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|HTMLElement|string|undefined} [params.body]
+     * @param {object|JFormData|FormData|Map|HTMLFormElement|string|undefined} [params.body]
      * Объект, FormData, либо коллекция с данными для отправки на сервер. Так же можно использовать form HTMLElement или id элемента представляющего форму. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} [params.responseType] 
      * Тип ответа от сервера:
@@ -807,19 +826,19 @@ class Jax{
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки GET-запроса
      */
     static async get(url,params){
         let request = new JaxRequest('GET')
         return request.executeRequest(url,params);
     }
+
    /**
-     * 
+     * Асинхронная функция отправки PUT-запроса
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers] 
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|HTMLElement|string|undefined} [params.body]
+     * @param {object|JFormData|FormData|Map|HTMLFormElement|string|undefined} [params.body]
      * Объект, FormData, либо коллекция с данными для отправки на сервер. Так же можно использовать form HTMLElement или id элемента представляющего форму. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} [params.responseType] 
      * Тип ответа от сервера:
@@ -849,19 +868,19 @@ class Jax{
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки PUT-запроса
      */
     static async put(url,params){
         let request = new JaxRequest('PUT')
         return request.executeRequest(url,params);
     }
+
     /**
-     * 
+     * Асинхронная функция отправки DELETE-запроса
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers] 
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|FormData|Map|undefined} [params.body]
+     * @param {object|JFormData|FormData|Map|undefined} [params.body]
      * Объект, FormData, либо коллекция с данными для отправки на сервер. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} [params.responseType]
      * Тип ответа от сервера:
@@ -882,7 +901,6 @@ class Jax{
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
      * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
-     * @desc Метод для отправки DELETE-запроса
      */
     static async delete(url,params){
         let request = new JaxRequest('DELETE')
@@ -891,7 +909,7 @@ class Jax{
     
 
     /**
-     * 
+     * Асинхронная функция отправки файлов POST-запросом
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers] 
@@ -923,11 +941,13 @@ class Jax{
      * @returns {Promise<object|string>} 
      * Возвращает Promise c результатом в случае успешного выполнения 
      * (При установке isMultipart:false и передаче FileList возвращает массив с результатами всех промисов)
-     * @desc Метод для отправки DELETE-запроса
      */
     static async file(url,params){
-        if(params?.body instanceof File || params?.body instanceof FileList){
-            if(params?.isMultipart === false && params?.body instanceof FileList){
+        if((typeof File === 'function' && params?.body instanceof File) 
+        || (typeof FileList === 'function' && params?.body instanceof FileList)
+        || params?.body instanceof JFile
+        || params?.body instanceof JFileList){
+            if(params?.isMultipart === false && ((typeof FileList === 'function' && params?.body instanceof FileList) || params?.body instanceof JFileList)){
                 let promises = []
                 let files = params.body
                 delete params.body
@@ -957,7 +977,7 @@ class JaxRequest{
     #url
     #responseType
     #isServer = Jax.isServer
-    #protocol ='https'
+    #protocol ='http'
     #isMultipartFilesSend = true
 
     constructor(method){
@@ -1042,7 +1062,7 @@ class JaxRequest{
     }
 
     #jsonMapReviewer(key, value) {
-        if(typeof value === 'object' && value !== null) {
+        if(value instanceof Object) {
             if (value.bodyType === 'Map') {
                 return new Map(value.value);
             }
@@ -1050,105 +1070,48 @@ class JaxRequest{
         return value;
     }
 
-    #checkInputTypeFile(el){
-        let inputs = el.getElementsByTagName('input');
-        for(let item of inputs){
-            if(item.type=='file') return true
-        }
-        return false
-    }
-
-    #convertObjToUrlOrData(data,formData=false){
-        let result = formData ? new FormData() : new Array()
+    #convertToUrl(params, add=''){
+        let result = []
+        let data
         try{
-            if(data instanceof Map) data = Object.fromEntries(data)
-            if(data instanceof Object){
-                for(let key in data){
-                    let item = data[key]
-                    if(item!==undefined){
-                        if(item instanceof Object||item instanceof Map){
-                            item=item instanceof Object?Object.entries(item):item
-                            for(let [el,value] of item){
-                                if(result instanceof FormData) result.append(`${key}[${el}]`,value.toString())
-                                else{
-                                    if(value==null) result.push(`${key}[${el}]=null`)
-                                    else result.push(`${key}[${el}]=${encodeURIComponent(value.toString())}`)
-                                }
+            if(params instanceof Map || (typeof FormData === 'function' && params instanceof FormData) || params instanceof JFormData) data = params.entries()
+            else if(params instanceof Object) data = Object.entries(params)
+            if(Array.isArray(params) && add == '')
+                throw new Error(`Top-level parameters cannot be converted to a URL. They shouldn't be array.`)
+            if(data){
+                for(let [key,item] of data){
+                    let keyData = Array.isArray(params) ? (Array.isArray(item) ? `[${key}]`:'[]') : (add != '' ? `[${key}]` : key)
+                    if(item instanceof JFile 
+                        || item instanceof JFileList 
+                        || (typeof File === 'function' && item instanceof File)
+                        || (typeof FileList === 'function' && item instanceof FileList)
+                        || item === undefined ) continue
+                    if(item instanceof Object){
+                        let itemData = item instanceof Map ? item : Object.entries(item)
+                        for(let [el,value] of itemData){
+                            let elData = Array.isArray(item) ? (Array.isArray(value) ? el : '') : el
+                            if(value===null) 
+                                result.push(`${add}${keyData}[${elData}]=null`)
+                            else if(value instanceof Object){
+                                result.push(this.#convertToUrl(value,`${add}${keyData}[${elData}]`))
                             }
-                        }else if(Array.isArray(item)){
-                            for(let el of item){
-                                if(result instanceof FormData) result.append(`${key}[]`,el.toString())
-                                else{
-                                    if(el==null) result.push(`${key}[]=null`)  
-                                    else result.push(`${key}[]=${encodeURIComponent(el.toString())}`)   
-                                }
-                            }
-                        }else{
-                            if(result instanceof FormData) result.append(key,item.toString())
-                            else{
-                                if(item==null) result.push(`${key}=null`)  
-                                else result.push(`${key}=${encodeURIComponent(item.toString())}`)    
-                            }
+                            else 
+                                result.push(`${add}${keyData}[${elData}]=${encodeURIComponent(value.toString())}`) 
                         }
+                    }else{
+                        if(item==null) result.push(`${add}${keyData}=null`)  
+                        else result.push(`${add}${keyData}=${encodeURIComponent(item.toString())}`)    
                     }
                 }
-            }else{
-                return false
             }
-            return Array.isArray(result)?result.join('&'):result
-        }catch(err){
-            throw err
-        }
-    }
-
-    #convertDataToUrlOrObject(data,toObj=false){
-        try{
-            if(data instanceof FormData){
-                let url
-                if(toObj){
-                    url={}
-                    let index=0
-                    for(let [key,value] of data.entries()){
-                        if(/[\[\]]/gm.test(key)){
-                            let prop = key.match(/[\[]([\w]+)[\]]/)
-                            if(prop!=null&&prop.length>1){ 
-                                let name = key.replace(/[\[]([\w]+)[\]]/g,'')
-                                let obj = url[name]===undefined?{}:url[name]
-                                if(obj!==undefined)
-                                    obj[prop[1]]=value
-                                url[name]=obj
-                            }else {
-                                let name = key.replace(/[\[\]]/g,'')
-                                let obj = url[name]===undefined?{}:url[name]
-                                if(obj!==undefined)
-                                    obj[index.toString()]=value
-                                url[name]=obj
-                            }
-                            index++
-                        }else{
-                            url[key]=value
-                        }
-                    }
-                    return url
-                }else{
-                    url=[];
-                    for(let [key,value] of data.entries()){
-                        url.push(encodeURIComponent(key)+'='+encodeURIComponent(value.toString()))
-                    }
-                    url=url.join('&')
-                }
-                return url
-            }else{
-                return false
-            }
+            return result.length ? result.join('&') : ''
         }catch(err){
             throw err
         }
     }
 
     #convertParams(params,file=false){
-        return new Promise((resolve, reject) => {
-            let isFile = false
+        return new Promise(async (resolve, reject) => {
             try {
                 this.#credentials = this.#getCredentials(params?.credentials)
                 if (params?.headers !== undefined && params?.headers !== undefined) {
@@ -1161,72 +1124,72 @@ class JaxRequest{
                 if (this.#method == 'GET' || this.#method == 'DELETE') {
                     this.#headers.set('Content-type', 'application/x-www-form-urlencoded')
                     if (params?.body !== undefined && params?.body !== null) {
-                        if (!this.#isServer && params.body instanceof FormData) {
-                            this.#url += '?' + this.#convertDataToUrlOrObject(params.body)
-                        } else if (params.body instanceof Map) {
-                            this.#url += '?' + this.#convertObjToUrlOrData(params.body)
-                        } else if (params.body instanceof Object) {
-                            this.#url += '?' + this.#convertObjToUrlOrData(params.body)
-                        } else if (params.body instanceof HTMLElement || typeof params.body === 'string') {
-                            let container = params.body instanceof HTMLElement ? params.body : document.getElementById(params.body)
-                            if (container && container.tagName.toLowerCase() == 'form') {
-                                if (container.querySelector('input[type="file"]')) {
+                        if (typeof HTMLFormElement === 'function' && (params.body instanceof HTMLFormElement || typeof params.body === 'string')) {
+                            let container = (typeof HTMLFormElement ==='function' && params.body instanceof HTMLFormElement) ? params.body : document.getElementById(params.body)
+                            if(container){
+                                if (container.querySelector('input[type="file"]')) 
                                     throw new Error('Sending a file using the GET method is not possible')
-                                }
-                                let data = new FormData(container)
-                                this.#url += '?' + this.#convertDataToUrlOrObject(data)
-                            } else {
-                                throw new Error('The HTMLElement passed to the data parameter is not a form')
+                                let data = await JFormData.fromDOM(container)
+                                this.#url += '?' + this.#convertToUrl(data)
+                            }else{
+                                throw new Error('Form element with id not found!')
                             }
-                        }
+                        }else if (params.body instanceof Object && !(typeof HTMLElement === 'function' && params.body instanceof HTMLElement)) {
+                            this.#url += '?' + this.#convertToUrl(params.body)
+                        } 
                     }
                 } else if (file && params?.body !== undefined) {
-                    if (!this.#isServer && (params?.body instanceof File || params.body instanceof FileList)) {
+                    if ((typeof File === 'function' && params.body instanceof File) 
+                    || (typeof FileList === 'function' && params.body instanceof FileList)
+                    || params.body instanceof JFile
+                    || params.body instanceof JFileList) {
                         this.#isMultipartFilesSend = params?.isMultipart!=undefined ? params.isMultipart : this.#isMultipartFilesSend
                         if(this.#isMultipartFilesSend){
-                            let form = new FormData();
+                            let form = new JFormData()
                             this.#headers.set('Content-type', 'multipart/form-data')
-                            if (params.body instanceof File) {
-                                form.append('files[]', params.body)
-                            } else if (params.body instanceof FileList) {
-                                for (let file of params.body) {
-                                    form.append('files[]', file)
-                                }
-                            }
-                            this.#body = form
+                            if (typeof File === 'function' && params.body instanceof File){
+                                let file = await JFile.load(params.body)
+                                if(file)
+                                    form.set('files[]', file)
+                                else
+                                    reject(new Error('Failed to convert body data to JFileList!'))
+                            }else if (typeof FileList === 'function' && params.body instanceof FileList){
+                                let files = await JFileList.load(params.body)
+                                if(files)
+                                    form.set('files[]', files)
+                                else
+                                    reject(new Error('Failed to convert body data to JFileList!'))
+                            }else
+                                form.set('files[]', params.body)
+                            let data = await form.toMultipart()
+                            if(data)
+                                this.#body = data
+                            else 
+                                throw new Error('Failed to convert data to multipart/form-data!')
                         }else{
-                            if (params.body instanceof File) {
-                                if (Array.from(Jax.MIME_FILES.keys()).includes(params.body.type)) {
-                                    isFile = true
-                                    this.#headers.set('Content-type', params.body.type)
-                                    let fr = new FileReader()
-                                    fr.onload = () => {
-                                        this.#body = fr.result
-                                        resolve(true)
-                                    }
-                                    fr.readAsArrayBuffer(params.body)
-                                }else{
-                                    reject(new Error('The data could not be sent because the client must be of type File or FileList!')) 
-                                }
+                            let file = (typeof File === 'function' && params.body instanceof File) 
+                                        ? await JFile.load(params.body) 
+                                        : (params.body instanceof JFile ? params.body : undefined)
+                            if (file && Array.from(Jax.MIME_FILES.keys()).includes(file.contentType)){
+                                this.#headers.set('Content-type',file.contentType)
+                                this.#body = file.data
                             }else{
-                                reject(new Error('The data could not be sent because the client must be of type File or FileList!')) 
+                                reject(new Error('Failed to convert body data to JFile. Invalid data or Content-Type header!')) 
                             }
                         }
-                    } else if(this.#isServer){
-                        //Дописать метод для отправки файла для сервера
                     } else {
-                        reject(new Error('The data could not be sent because the client must be of type File or FileList!')) 
+                        reject(new Error('The data could not be sent because the client must be of type JFile/File or JFileList/FileList!')) 
                     }
                 } else {
                     let sendType = 'url'
                     this.#headers.set('Content-type', 'application/x-www-form-urlencoded');
                     if (typeof params?.sendType === 'string') {
                         switch (params.sendType) {
-                            case 'json':
+                            case Jax.SEND_TYPES.JSON:
                                 sendType = 'json'
                                 this.#headers.set('Content-type', 'application/json; charset=utf-8')
                                 break
-                            case 'form':
+                            case Jax.SEND_TYPES.FORM:
                                 sendType = 'form'
                                 this.#headers.set('Content-type', 'multipart/form-data')
                                 break
@@ -1237,85 +1200,77 @@ class JaxRequest{
                         }
                     }
                     if (params?.body != undefined && params?.body != null) {
-                        if (!this.#isServer && params.body instanceof FormData) {
-                            switch (sendType) {
-                                case 'json':
-                                    this.#body = JSON.stringify(this.#convertDataToUrlOrObject(params.body, true))
-                                    break
-                                case 'form':
-                                    this.#body = params.body
-                                    break
-                                case 'url':
-                                    this.#body = this.#convertDataToUrlOrObject(params.body)
-                                    break
-                            }
-                        } else if (params.body instanceof Map) {
-                            switch (sendType) {
-                                case 'json':
-                                    this.#body = JSON.stringify(params.body, this.#jsonMapReplacer)
-                                    break
-                                case 'form':
-                                    this.#body = this.#convertObjToUrlOrData(params.body, true)
-                                    break
-                                case 'url':
-                                    this.#body = this.#convertObjToUrlOrData(params.body)
-                                    break
-                            }
-                        } else if (params.body instanceof Object) {
-                            switch (sendType) {
-                                case 'json':
-                                    this.#body = JSON.stringify(params.body, this.#jsonMapReplacer)
-                                    break
-                                case 'form':
-                                    this.#body = this.#convertObjToUrlOrData(params.body, true)
-                                    break
-                                case 'url':
-                                    this.#body = this.#convertObjToUrlOrData(params.body)
-                                    break
-                            }
-                        } else if (params.body instanceof HTMLElement && !this.#isServer || typeof params.body === 'string' && !this.#isServer) {
-                            let container = params.body instanceof HTMLElement ? params.body : document.getElementById(params.body)
-                            if (container && container.tagName.toLowerCase() == 'form') {
-                                let data = new FormData(container)
+                        if (typeof HTMLFormElement === 'function' && (params.body instanceof HTMLFormElement || (typeof params.body === 'string' && !this.#isServer))) {
+                            let container = (typeof HTMLFormElement === 'function' && params.body instanceof HTMLFormElement) ? params.body : document.getElementById(params.body)
+                            if (container) {
+                                params.body = await JFormData.fromDOM(container)
                                 if (container.querySelector('input[type="file"]') != null) {
                                     this.#headers.set('Content-type', 'multipart/form-data')
-                                    this.#body = data
+                                    let data = await params.body.toMultipart()
+                                    if(data)
+                                        this.#body = data
+                                    else 
+                                        throw new Error('Failed to convert data to multipart/form-data!')
                                 } else {
                                     switch (sendType) {
-                                        case 'json':
-                                            this.#body = JSON.stringify(this.#convertDataToUrlOrObject(data, true))
+                                        case Jax.SEND_TYPES.JSON:
+                                            this.#body = JSON.stringify(params.body.toObj(),this.#jsonMapReplacer)
                                             break
-                                        case 'form':
-                                            this.#body = data
+                                        case Jax.SEND_TYPES.FORM:
+                                            let data = await params.body.toMultipart()
+                                            if(data)
+                                                this.#body = data
+                                            else 
+                                                throw new Error('Failed to convert data to multipart/form-data!')
                                             break
-                                        case 'url':
-                                            this.#body = this.#convertDataToUrlOrObject(data)
+                                        case Jax.SEND_TYPES.URL:
+                                            this.#body = this.#convertToUrl(params.body)
                                             break
                                     }
                                 }
                             } else {
-                                throw new Error('The HTMLElement passed to the data parameter is not a form or input')
+                                throw new Error('The HTMLFormElement passed to the data parameter is not a form or input')
+                            }
+                        } else if (params.body instanceof Object && !(typeof HTMLElement === 'function' && params.body instanceof HTMLElement)) {
+                            let data
+                            switch (sendType) {
+                                case Jax.SEND_TYPES.JSON:
+                                    data = (typeof FormData === 'function' && params.body instanceof FormData) 
+                                    ? (await JFormData.from(params.body)).toObj() 
+                                    : (params.body instanceof JFormData 
+                                        ? params.body.toObj() 
+                                        : params.body)
+                                    this.#body = JSON.stringify(data,this.#jsonMapReplacer)
+                                    break
+                                case Jax.SEND_TYPES.FORM:
+                                    data = await (await JFormData.from(params.body)).toMultipart()
+                                    if(data)
+                                        this.#body = data
+                                    else 
+                                        throw new Error('Failed to convert data to multipart/form-data!')
+                                    break
+                                case Jax.SEND_TYPES.URL:
+                                    this.#body = this.#convertToUrl(params.body)
+                                    break
                             }
                         }
                     }
                 }
                 if (typeof params?.responseType === 'string') {
                     let issetType = false
-                    for (let item in Jax.RESPONSE) {
-                        if (params.responseType == Jax.RESPONSE[item]) {
-                            this.#responseType = Jax.RESPONSE[item]
+                    for (let item in Jax.RESPONSE_TYPES) {
+                        if (params.responseType == Jax.RESPONSE_TYPES[item]) {
+                            this.#responseType = Jax.RESPONSE_TYPES[item]
                             issetType = true
                             break
                         }
                     }
-                    if (!issetType) this.#responseType = Jax.RESPONSE.JSON
+                    if (!issetType) this.#responseType = Jax.RESPONSE_TYPES.JSON
                 } else {
-                    this.#responseType = Jax.RESPONSE.JSON
+                    this.#responseType = Jax.RESPONSE_TYPES.JSON
                 }
                 if (typeof params?.progress === 'function' && !this.#isServer) this.#onprogress = params.progress
-                if (!isFile) {
-                    resolve(true)
-                }
+                resolve(true)
             } catch (err) {
                 reject(err)
             }
@@ -1327,14 +1282,25 @@ class JaxRequest{
             let options, http, data = []
             try {
                 let str = this.#url.replace(/^(http:\/\/|https:\/\/)/,'');
-                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',Buffer.byteLength(this.#body))
+                let length = this.#body instanceof Uint8Array 
+                    ? this.#body.length 
+                    : (typeof this.#body ==='string' 
+                        ? new JBuffer(this.#body).length
+                        : 0)
+                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',length)
                 http = (await import(this.#protocol)).default
                 str = str.split('/')
                 let host = str.shift()
+                let port = this.#protocol == 'http' ? 80 : 443
+                if(/\:[0-9]{1,6}$/.test(host)){
+                    let hostData = host.split(':')
+                    host = hostData.shift()
+                    port = hostData.pop()
+                }
                 let url = str.join('/')
                 options = {
                     hostname: host,
-                    port: this.#protocol == 'http' ? 80 : 443,
+                    port: port,
                     path: `/${url}`,
                     method: this.#method,
                     headers: Object.fromEntries(this.#headers)
@@ -1352,37 +1318,39 @@ class JaxRequest{
                         this.#body = null
                         this.#url = null
                         if(data.length){
+                            console.log(data)
                             switch (this.#responseType) {
-                                case Jax.RESPONSE.TEXT: 
-                                    if(data.length==1) { result=data[0].toString('utf8') }
-                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
+                                case Jax.RESPONSE_TYPES.TEXT: 
+                                    if(data.length==1) 
+                                        result=data[0].toString('utf8') 
+                                    else 
+                                        result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     break
-                                case Jax.RESPONSE.BLOB:
-                                case Jax.RESPONSE.BUFFER: 
-                                    if(data.length==1) {result=data[0]}
-                                    else {
-                                        let totalLength=0
-                                        for(let item of data){
-                                            totalLength+=item.length
-                                        }
-                                        result = Buffer.concat(data,totalLength)
-                                    }
+                                case Jax.RESPONSE_TYPES.BLOB:
+                                    result = new Blob(data)
+                                case Jax.RESPONSE_TYPES.BUFFER: 
+                                    result = new JBuffer(data)
                                     break
-                                
-                                case Jax.RESPONSE.JSON: 
-                                    if(data.length==1) { result=data[0].toString('utf8') }
-                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
+                                case Jax.RESPONSE_TYPES.JSON: 
+                                    if(data.length==1) 
+                                        result=data[0].toString('utf8') 
+                                    else 
+                                        result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     result = JSON.parse(result);
                                     break
                                 
-                                case Jax.RESPONSE.DOC: 
-                                    if(data.length==1) { result=data[0].toString('utf8') }
-                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
+                                case Jax.RESPONSE_TYPES.DOC: 
+                                    if(data.length==1) 
+                                        result=data[0].toString('utf8') 
+                                    else  
+                                        result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     break
                                 
                                 default: 
-                                    if(data.length==1) { result=data[0].toString('utf8') }
-                                    else { result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) }
+                                    if(data.length==1) 
+                                        result=data[0].toString('utf8')
+                                    else 
+                                        result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     break
                                 
                             }
@@ -1453,13 +1421,13 @@ class JaxRequest{
                 .then(res => res.ok ? res : Promise.reject(res))
                 .then(async data => {
                     switch(this.#responseType){
-                        case Jax.RESPONSE.TEXT: 
+                        case Jax.RESPONSE_TYPES.TEXT: 
                             return data.text()
-                        case Jax.RESPONSE.BLOB:
+                        case Jax.RESPONSE_TYPES.BLOB:
                             return data.blob()
-                        case Jax.RESPONSE.BUFFER:
+                        case Jax.RESPONSE_TYPES.BUFFER:
                             return data.arrayBuffer()
-                        case Jax.RESPONSE.JSON:
+                        case Jax.RESPONSE_TYPES.JSON:
                             return data.json()
                         default:
                             return data.text()
