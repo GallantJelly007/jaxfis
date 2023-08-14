@@ -18,9 +18,9 @@
         + [__Jax.setSSL()__](#jaxgeturlparams)
         + [__Jax.get()__](#jaxgeturlparams)
         + [__Jax.post()__](#jaxposturlparams)
-        + [__Jax.put()__](#)
-        + [__Jax.delete()__](#)
-        + [__Jax.file()__](#)
+        + [__Jax.put()__](#jaxputurlparams)
+        + [__Jax.delete()__](#jaxdeleteurlparams)
+        + [__Jax.file()__](#jaxfileurlparams)
 + [__Класс JFile__](#класс-jfile)
     + [__Поля и свойства__](#d0bfd0bed0bbd18f-d0b8-d181d0b2d0bed0b9d181d182d0b2d0b0-1)
         + [__(JFile)object.contentType__](#jfileobjectcontenttype)
@@ -289,9 +289,9 @@ if(form){
 ```
 Так же как и в первом примере запрос будет успешно отработан
 
-_Пример №3:_ Отправка с использованием [JFormData](#) или Object
+_Пример №3:_ Отправка с использованием [JFormData](#класс-jformdata) или Object
 
-Данный способ подойдет когда нет HTMLFormElement на странице, либо при отправке с сервера на сервер(будет отличаться только способ загрузки файлов, подробнее см. [JFile](#) и [JFileList](#)). 
+Данный способ подойдет когда нет HTMLFormElement на странице, либо при отправке с сервера на сервер(будет отличаться только способ загрузки файлов, подробнее см. [JFile](#класс-jfile) и [JFileList](#класс-jfilelist)). 
 
 Предположим что мы отправляем два файла и email пользователя с одного сервера на другой:
 
@@ -301,7 +301,7 @@ let files = await JFileList.load([
     './images/1.png',
     './images/2.png'
 ])
-if(files){
+if(files && files?.length){
     form.set('images',files)
     form.set('email','example@mail.com')
 
@@ -324,7 +324,7 @@ let files = await JFileList.load([
     './images/2.png'
 ])
 
-if(files){
+if(files && files?.length){
     Jax.post('http://example/send-files',{
         body:{
             files,
@@ -348,7 +348,7 @@ if(files){
 &nbsp;
 #### __Jax.put(url,params)__ 
 
-Функция для отправки GET-запроса
+Функция для отправки PUT-запроса
 
 #### __Параметры:__
 - __url__ ( _String_ ) - URL-адрес отправки
@@ -356,6 +356,7 @@ if(files){
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
     - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
+    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types)
     - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
@@ -371,28 +372,13 @@ if(files){
 Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
 ```
 
-__Пример GET-запроса:__
-```js
-Jax.get('http://example/jax-get',{
-    body:{
-        user:'TestUser',
-        age:18,
-        policy:true,
-    }
-}).then(result=>{
-    console.log(result)
-}).catch(err=>{
-    console.error(err)
-})
-
-```
 &nbsp;
 
 ---
 &nbsp;
 #### __Jax.delete(url,params)__ 
 
-Функция для отправки GET-запроса
+Функция для отправки DELETE-запроса
 
 #### __Параметры:__
 - __url__ ( _String_ ) - URL-адрес отправки
@@ -415,63 +401,43 @@ Jax.get('http://example/jax-get',{
 Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
 ```
 
-__Пример GET-запроса:__
-```js
-Jax.get('http://example/jax-get',{
-    body:{
-        user:'TestUser',
-        age:18,
-        policy:true,
-    }
-}).then(result=>{
-    console.log(result)
-}).catch(err=>{
-    console.error(err)
-})
-
-```
 &nbsp;
 
 ---
 &nbsp;
 #### __Jax.file(url,params)__ 
 
-Функция для отправки GET-запроса
+Функция для отправки файлов, используется POST-запрос. В отличии от [Jax.post()](#jaxposturlparams) можно передавать только файловые объекты. При этом есть отправка в multipart/form-data формате, и отправка бинарных данных каждого файла в отдельном запросе со своим заголовком contentType
 
 #### __Параметры:__
 - __url__ ( _String_ ) - URL-адрес отправки
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
-    - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
+    - __params.body__ ( _File | FileList | JFile | JFileList_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
+    - __params.isMultipart__ ( _Boolean_ ) - Отправить данные с заголовком multipart/form-data (по умолчанию true)
     - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
     - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
-( ___Promise\<object\>___ ) В случае успешного выполнения вернет объект с результатом следующего вида
+( ___Promise\<object\>___ ) Возвращает Promise c результатом в случае успешного выполнения 
+__* (При установке isMultipart:false и передаче коллекции файлов возвращает массив с результатами всех промисов для каждого файла)__
 
+
+
+__Пример отправки файлов:__
 ```js
-{
-    success: true
-    data: /*response*/ 
+let fileInput = document.getElementById('file')
+let files = await JFileList.load(fileInput.files)
+if(files && files?.length){
+	Jax.file('http://localhost:3003/jax-test', {
+		body: files,
+	}).then(result => {
+		console.log(result)
+	}).catch(err => {
+		console.error(err)
+	})
 }
-
-Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
-```
-
-__Пример GET-запроса:__
-```js
-Jax.get('http://example/jax-get',{
-    body:{
-        user:'TestUser',
-        age:18,
-        policy:true,
-    }
-}).then(result=>{
-    console.log(result)
-}).catch(err=>{
-    console.error(err)
-})
 
 ```
 &nbsp;
@@ -505,7 +471,7 @@ Jax.get('http://example/jax-get',{
 &nbsp;
 
 #### __(JFile) object.data__ _(JBuffer)_ _( только чтение )_
-Свойство содержащее данные из файла в виде [JBuffer](#) 
+Свойство содержащее данные из файла в виде [JBuffer](#класс-jbuffer) 
 &nbsp;
 
 #### __(JFile) object.path__ _(String)_ _( только чтение )_ _( только в Node.js )_

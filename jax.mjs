@@ -938,7 +938,7 @@ class Jax{
      * 
      * document - Данные как XML/HTTP документ
      * 
-     * @param {File|FileList} [params.body]
+     * @param {File|FileList|JFile|JFileList} [params.body]
      * Файл или коллекция отправляемых файлов (Обязательный параметр)
      * 
      * @param {boolean} [params.isMultipart]
@@ -974,7 +974,7 @@ class Jax{
                 return request.executeRequest(url,params,true);
             }
         }else{
-            throw new Error('params.body must be of type File or FileList!')
+            throw new Error('params.body must be of type File, FileList, Jfile or JFileList!')
         }  
     }
 }
