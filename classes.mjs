@@ -125,7 +125,6 @@ export class JFormData{
             let multipartData=''
             for(let key of this.#data.keys()){
                 multipartData = ''
-                multipartData += `${boundary}\r\n`;
                 let isFiles=false
                 let data = this.#data.get(key)
                 if(typeof File === 'function' && data instanceof File){
@@ -143,6 +142,7 @@ export class JFormData{
                 }
                 if(isFiles){
                     for(let file of data){
+                        multipartData += `${boundary}\r\n`;
                         multipartData += `Content-Disposition: form-data; name="${key}"; filename="${file.fullName}"\r\n`
                         multipartData += `Content-Type:${file.contentType}\r\n\r\n`;
                         result = result.concat([
@@ -152,6 +152,7 @@ export class JFormData{
                         ]);
                     }
                 }else{
+                    multipartData += `${boundary}\r\n`;
                     multipartData += `Content-Disposition: form-data; name="${key}"\r\n\r\n${data.toString()}\r\n`
                     result = result.concat(new JBuffer(multipartData))
                 }
@@ -178,14 +179,6 @@ export class JFormData{
      */
     get(name){
         return this.#data.get(name)
-    }
-
-    /**
-     * Получение коллекции данных из JFormData
-     * @returns {Map} 
-     */
-    getAll(){
-        return this.#data
     }
 
     /**
@@ -273,7 +266,7 @@ export class JFile{
                 if(typeof File === 'function' && file instanceof File){
                     outputFile.#fullName = file.name
                     let nameParts = file.name.split('.')
-                    outputFile.#ext = (nameParts.pop())?.toLowerCase()
+                    outputFile.#ext = `.${(nameParts.pop())?.toLowerCase()}`
                     outputFile.#name = nameParts.join('.')
                     outputFile.#size = file.size
                     outputFile.#contentType = file.type
@@ -295,7 +288,7 @@ export class JFile{
                         let stat = fs.statSync(file,{throwIfNoEntry:false})
                         let fullName = path.basename(file)
                         let nameParts = fullName.split('.')
-                        let ext = (nameParts.pop())?.toLowerCase()
+                        let ext = `.${(nameParts.pop())?.toLowerCase()}`
                         if (stat && ext && stat.isFile() && Array.from(Jax.MIME_FILES.values()).includes(ext)) {
                             let contentType = Array.from(Jax.MIME_FILES.keys())
                                 .find(key => Jax.MIME_FILES.get(key) == ext)
@@ -310,9 +303,8 @@ export class JFile{
                                 resolve(outputFile)
                             }
                         }
-                    }else{
-                        resolve(undefined)
-                    } 
+                    }
+                    resolve(undefined)
                 }else{
                     resolve(undefined)
                 }  
@@ -325,10 +317,30 @@ export class JFile{
 }
 
 export class JFileList{
-    #length
+    #length = 0
     
     get length(){
         return this.#length
+    }
+
+    /**
+     * 
+     * @param {Array<JFile>} files 
+     */
+    constructor(files){
+        if(Array.isArray(files)){
+            let count = 0
+            for(let file of files){
+                if(file instanceof JFile){
+                    Object.defineProperty(this, count, {
+                        value: file,
+                        writable: false
+                    })
+                    this.#length++
+                    count++
+                }
+            }
+        }
     }
 
     /**
@@ -349,7 +361,7 @@ export class JFileList{
                             Object.defineProperty(list, i, {
                                 value: newFile,
                                 writable: false
-                            }); 
+                            })
                     }
                 }else if(typeof File === 'function' && files instanceof File){
                     list.#length = 1
@@ -358,30 +370,45 @@ export class JFileList{
                         Object.defineProperty(list, 0, {
                             value: newFile,
                             writable: false
-                        }); 
-                }else if(Array.isArray(files)){
-                    list.#length = files.length
-                    for(let i=0; i<files.length; i++){
-                        if(typeof files[i] === 'string' || (typeof File === 'function' && files[i] instanceof File)){
-                            let newFile = await JFile.load(files[i])
-                            if(newFile)
-                                Object.defineProperty(list, i, {
-                                    value: newFile,
-                                    writable: false
-                                }); 
-                        }else if(files[i] instanceof JFile){
-                            Object.defineProperty(list, i, {
-                                value: files[i],
-                                writable: false
-                            });
-                        }
+                        }) 
+                }else if(typeof files === 'string'){
+                    let newFile = await JFile.load(files)
+                    if(newFile){  
+                        list.#length=1
+                        Object.defineProperty(list, 0, {
+                            value: newFile,
+                            writable: false
+                        })
                     }
                 }else if(files instanceof JFile){
                     list.#length = 1
                     Object.defineProperty(list, 0, {
                         value: files,
                         writable: false
-                    }); 
+                    })
+                }else if(Array.isArray(files)){
+                    list.#length = 0
+                    let count = 0
+                    for(let file of files){
+                        if(typeof file === 'string' || (typeof File === 'function' && file instanceof File)){
+                            let newFile = await JFile.load(file)
+                            if(newFile){  
+                                Object.defineProperty(list, count, {
+                                    value: newFile,
+                                    writable: false
+                                })
+                                list.#length++
+                                count++
+                            }
+                        }else if(file instanceof JFile){
+                            Object.defineProperty(list, count, {
+                                value: file,
+                                writable: false
+                            })
+                            list.#length++
+                            count++
+                        }
+                    }
                 }
                 resolve(list)
             }catch(err){
@@ -469,7 +496,7 @@ export class JFileList{
 
     /**
      * Функция для объединения нескольких коллекций с текущей коллекцией
-     * @param {JFileList|JFileList[]} list
+     * @param {JFileList|Array<JFileList>} list
      * Коллекция, или массив с коллекциями объектов JFile 
      * @returns {JFileList}
      */
@@ -504,6 +531,19 @@ export class JFileList{
         return files
     }
 
+    toString(){
+        if(this.#length){
+            let res = `JFileList[${this.#length}]{\n`
+            for(let item of this){
+                res+=`   filename: ${item.fullName}, size: ${item.size}B\n`
+            }
+            res+='}'
+            return res
+        }else{
+            return `JFileList[0]{}`
+        }
+    }
+
     [Symbol.iterator](){
         let index = -1
         let data = this
@@ -534,7 +574,7 @@ export class JBuffer extends Uint8Array{
             if(buffer[0] instanceof ArrayBuffer || buffer[0] instanceof Uint8Array){
                 buffer = buffer.filter(buf=>buf instanceof ArrayBuffer || buf instanceof Uint8Array)
                 if(buffer.length){
-                    buffer = buffer.reduce((acc,cur)=>acc = acc.concat(Array.from(cur)),[])
+                    buffer = buffer.reduce((acc,cur)=>acc = acc.concat(Array.from(new Uint8Array(cur))),[])
                     super(buffer)
                 }else{
                     super()
@@ -544,6 +584,18 @@ export class JBuffer extends Uint8Array{
             }else{
                 super()
             }
+        }
+    }
+
+    /**
+     * Функция для получения JBuffer из Blob
+     * @param {Blob} blob 
+     * @returns {Promise<JBuffer|undefined>}
+     * Возвращает новый Jbuffer либо undefined
+     */
+    static async fromBlob(blob){
+        if(blob instanceof Blob){
+            return new JBuffer(new Uint8Array(await blob.arrayBuffer()))
         }
     }
 
@@ -558,7 +610,7 @@ export class JBuffer extends Uint8Array{
         if(Array.isArray(buffers)){
             buffers = buffers.filter(buf => buf instanceof ArrayBuffer || buf instanceof Uint8Array)
             if(buffers.length){
-                let bytes = buffers.reduce((acc,cur)=>acc = acc.concat(Array.from(cur)),[])
+                let bytes = buffers.reduce((acc,cur)=>acc = acc.concat(Array.from(new Uint8Array(cur))),[])
                 return new JBuffer(bytes)
             }
         }
@@ -566,9 +618,9 @@ export class JBuffer extends Uint8Array{
 
     /**
      * Статическая функция для объединения различных байт-массивов
-     * @param {Array<Buffer|JBuffer|Uint8Array|any>|Buffer|JBuffer|Uint8Array|any} buffers 
+     * @param {Array<Buffer|ArrayBuffer|JBuffer|Uint8Array>|Buffer|JBuffer|Uint8Array|ArrayBuffer} buffers 
      * Буфер или массив буферов
-     * @returns {JBuffer}
+     * @returns {JBuffer|undefined}
      * Возвращает новый JBuffer объект
      */
     concat(buffers){
@@ -578,16 +630,16 @@ export class JBuffer extends Uint8Array{
             buffers = [this, buffers]
         buffers = buffers.filter(buf => buf instanceof ArrayBuffer || buf instanceof Uint8Array)
         if(buffers.length){
-            let bytes = buffers.reduce((acc,cur)=>acc = acc.concat(Array.from(cur)),[])
+            let bytes = buffers.reduce((acc,cur)=>acc = acc.concat(Array.from(new Uint8Array(cur))),[])
             return new JBuffer(bytes)
         }
     }
 
     /**
      * Функция для разбиения буфера на несколько частей определенной длины
-     * @param {number} len 
+     * @param {Number} len 
      * Длина/смещение по которому разбивается буфер
-     * @param {boolean} all 
+     * @param {Boolean} all 
      * Параметр указывающий разбивать ли весь буфер до конца (по умолчанию - true)
      * @returns {Array<JBuffer>|undefined}
      */
@@ -632,18 +684,5 @@ export class JBuffer extends Uint8Array{
     toText(){
         let decoder = new TextDecoder()
         return decoder.decode(this)
-    }
-
-    /**
-     * Статическая функция для кодирования строки в JBuffer-объект
-     * @param {string} str 
-     * Строка
-     * @returns {JBuffer|undefined}
-     * Новый объект JBuffer, либо undefined если параметр не являлся строкой
-     */
-    static toBuffer(str){
-        if(typeof str === 'string'){
-            return new JBuffer(str)
-        }    
     }
 }

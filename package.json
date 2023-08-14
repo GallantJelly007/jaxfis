@@ -1,10 +1,12 @@
 {
   "name":"jax",
   "version":"1.0.0",
-  "main":"index.js",
+  "main": "./index.js",
+  "exports": "./index.js",
+  "type": "module",
   "description":"Library for executing Ajax requests on the server and client side",
   "author": {
-    "name": "Alex Filatov",
+    "name": "Alex",
     "email": "alariel007@gmail.com"
   },
   "license": "AAL",
@@ -17,10 +19,12 @@
     "jax"
   ],
   "repository": {
-    "type":"git",
-    "url":""
+    "type": "git",
+    "url": "git+https://github.com/GallantJelly007/jax"
   },
-  "devDependencies": {
-    "@types/node": "^18.16.3"
-  }
+  "bugs": {
+    "url": "https://github.com/GallantJelly007/jax/issues",
+    "email": "alariel007@gmail.com"
+  },
+  "homepage": "https://github.com/GallantJelly007/jax#readme"
 }

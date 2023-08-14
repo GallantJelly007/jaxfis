@@ -1,10 +1,12 @@
-import { JFile, JFileList, JFormData, JBuffer} from './classes.js'
+import { JFile, JFileList, JFormData, JBuffer} from './classes.mjs'
 class Jax{
 
     /** Переменная для определения отправляется ли запрос с серверного приложения или клиента(браузера) */
     static isServer = typeof window ==='undefined'
     /** Использовать ли вместо XMLHTTPRequest FetchAPI */
     static useFetch = false
+
+    static #protocol = 'http'
 
     static #responseTypes={
         TEXT:'text',
@@ -302,6 +304,7 @@ class Jax{
         ['application/vnd.joost.joda-archive','.joda'],
         ['video/jpm','.jpm'],
         ['image/jpeg','.jpeg'],
+        ['image/jpeg','.jpg'],
         ['image/x-citrix-jpeg','.jpeg'],
         ['image/pjpeg','.pjpeg'],
         ['video/jpeg','.jpgv'],
@@ -731,6 +734,10 @@ class Jax{
         ['application/vnd.zzazz.deck+xml','.zaz']
     ]);
 
+    static setSSL(isSet=true){
+        this.#protocol = isSet?'https':'http'
+    } 
+
     /**
      * Типы ответа используемые при отправке запроса
      */
@@ -758,13 +765,17 @@ class Jax{
     static get MIME_FILES(){
         return Jax.#mimeFiles
     }
+
+    static get PROTOCOL(){
+        return Jax.#protocol
+    }
     /**
      * Асинхронная функция отправки POST-запроса
      * @param {string} url 
      * @param {object} params 
      * @param {Map<string,string>|undefined} [params.headers]
      * Коллекция для дополнительных заголовков. Content-Type устанавливать не нужно.
-     * @param {object|JFormData|FormData|Map|HTMLFormElement|string|undefined} params.body
+     * @param {object|JFormData|FormData|Map|HTMLFormElement|File|FileList|JFile|JFileList|string|undefined} params.body
      * Объект, FormData, либо коллекция с данными для отправки на сервер. Так же можно использовать form HTMLElement или id элемента представляющего форму. C responseType='json' поддерживает отправку объектов с глубокой вложенностью и Map-коллекциями
      * @param {string|undefined} [params.responseType] 
      * Тип ответа от сервера:
@@ -793,7 +804,7 @@ class Jax{
      * 
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
 
     static async post(url,params){
@@ -825,7 +836,7 @@ class Jax{
      * Устанавливает credentials для кросс-доменных запросов. Значение из Jax.CREDENTIALS
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async get(url,params){
         let request = new JaxRequest('GET')
@@ -867,7 +878,7 @@ class Jax{
      * 
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async put(url,params){
         let request = new JaxRequest('PUT')
@@ -900,7 +911,7 @@ class Jax{
      * 
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} Возвращает Promise c результатом в случае успешного выполнения 
+     * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async delete(url,params){
         let request = new JaxRequest('DELETE')
@@ -938,7 +949,7 @@ class Jax{
      * 
      * @param {function} [params.progress]
      * Callback-функция для получения текущего прогресса (не работает для отправки с сервера)
-     * @returns {Promise<object|string>} 
+     * @returns {Promise<object>} 
      * Возвращает Promise c результатом в случае успешного выполнения 
      * (При установке isMultipart:false и передаче FileList возвращает массив с результатами всех промисов)
      */
@@ -977,7 +988,7 @@ class JaxRequest{
     #url
     #responseType
     #isServer = Jax.isServer
-    #protocol ='http'
+    #protocol = Jax.PROTOCOL
     #isMultipartFilesSend = true
 
     constructor(method){
@@ -1022,10 +1033,6 @@ class JaxRequest{
 		}
         return request
 	}
-
-    setSSL(isSet=true){
-        this.#protocol = isSet?'https':'http'
-    } 
 
     #getCredentials(credentials){
         if(Jax.useFetch){
@@ -1243,7 +1250,10 @@ class JaxRequest{
                                     this.#body = JSON.stringify(data,this.#jsonMapReplacer)
                                     break
                                 case Jax.SEND_TYPES.FORM:
-                                    data = await (await JFormData.from(params.body)).toMultipart()
+                                    if(params.body instanceof JFormData)
+                                        data = await params.body.toMultipart()
+                                    else
+                                        data = await (await JFormData.from(params.body)).toMultipart()
                                     if(data)
                                         this.#body = data
                                     else 
@@ -1281,7 +1291,10 @@ class JaxRequest{
         return new Promise(async (resolve, reject) => {
             let options, http, data = []
             try {
-                let str = this.#url.replace(/^(http:\/\/|https:\/\/)/,'');
+                let proto = this.#url.match(/^(http:\/\/|https:\/\/)/gi)
+                if(proto!=null && proto?.length)
+                    this.#protocol = proto[0].replace(/[\/\\\:]/g,'')
+                let str = this.#url.replace(/^(http:\/\/|https:\/\/)/,'')
                 let length = this.#body instanceof Uint8Array 
                     ? this.#body.length 
                     : (typeof this.#body ==='string' 
@@ -1318,7 +1331,6 @@ class JaxRequest{
                         this.#body = null
                         this.#url = null
                         if(data.length){
-                            console.log(data)
                             switch (this.#responseType) {
                                 case Jax.RESPONSE_TYPES.TEXT: 
                                     if(data.length==1) 
@@ -1352,7 +1364,6 @@ class JaxRequest{
                                     else 
                                         result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     break
-                                
                             }
                             resolve({data:result,success:true})
                         }else{
@@ -1426,15 +1437,19 @@ class JaxRequest{
                         case Jax.RESPONSE_TYPES.BLOB:
                             return data.blob()
                         case Jax.RESPONSE_TYPES.BUFFER:
-                            return data.arrayBuffer()
+                            return new JBuffer(data.arrayBuffer())
                         case Jax.RESPONSE_TYPES.JSON:
                             return data.json()
                         default:
                             return data.text()
                     }
                 }).then(result=>{
-                    let response = (this.#responseType == 'document' && typeof result == 'string') ?
-                        new DOMParser().parseFromString(result, 'text/html') :
+                    let response = (this.#responseType === Jax.RESPONSE_TYPES.DOC && typeof result === 'string' && typeof DOMParser === 'function') ?
+                        {
+                           html:new DOMParser().parseFromString(result, 'text/html'), 
+                           xml:new DOMParser().parseFromString(result, 'application/xml'),
+                           svg:new DOMParser().parseFromString(result, 'image/svg+xml')
+                        }:
                         result
                     this.#method = null
                     this.#onprogress = null
