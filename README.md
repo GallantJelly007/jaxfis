@@ -7,13 +7,13 @@
 + [__Краткое описание__](#краткое-описание)
 + [__Класс Jax__](#класс-jax)
     + [__Поля и свойства__](#поля-и-свойства)
-        + [__Jax.SEND_TYPES__](#jaxsend_types)
-        + [__Jax.RESPONSE_TYPES__](#jaxresponse_types)
-        + [__Jax.CREDENTIALS__](#jaxcredentials)
-        + [__Jax.MIME_FILES__](#jaxmime_files)
-        + [__Jax.PROTOCOL__](#jaxmime_files)
-        + [__Jax.useFetch__](#jaxusefetch)
-        + [__Jax.isServer__](#jaxisserver)
+        + [__Jax.SEND_TYPES__](#jaxsend_types-object)
+        + [__Jax.RESPONSE_TYPES__](#jaxresponse_types-object)
+        + [__Jax.CREDENTIALS__](#jaxcredentials-object)
+        + [__Jax.MIME_FILES__](#jaxmime_files-map-только-чтение)
+        + [__Jax.PROTOCOL__](#jaxprotocol-string-только-чтение)
+        + [__Jax.useFetch__](#jaxusefetch-boolean)
+        + [__Jax.isServer__](#jaxisserver-boolean)
     + [__Функции__](#функции)
         + [__Jax.setSSL()__](#jaxgeturlparams)
         + [__Jax.get()__](#jaxgeturlparams)
@@ -23,13 +23,13 @@
         + [__Jax.file()__](#jaxfileurlparams)
 + [__Класс JFile__](#класс-jfile)
     + [__Поля и свойства__](#d0bfd0bed0bbd18f-d0b8-d181d0b2d0bed0b9d181d182d0b2d0b0-1)
-        + [__(JFile)object.contentType__](#jfileobjectcontenttype)
-        + [__(JFile)object.fullName__](#jfileobjectfullname)
-        + [__(JFile)object.name__](#jfileobjectname)
-        + [__(JFile)object.ext__](#jfileobjectext)
-        + [__(JFile)object.size__](#jfileobjectsize)
-        + [__(JFile)object.data__](#jfileobjectdata)
-        + [__(JFile)object.path__](#jfileobjectpath)
+        + [__(JFile)object.contentType__](#jfile-objectcontenttype-string--только-чтение)
+        + [__(JFile)object.fullName__](#jfileobjectfullname-string--только-чтение)
+        + [__(JFile)object.name__](#jfile-objectname-string--только-чтение)
+        + [__(JFile)object.ext__](#jfile-objectext-string--только-чтение)
+        + [__(JFile)object.size__](#jfile-objectsize-number--только-чтение)
+        + [__(JFile)object.data__](#jfile-objectdata-jbuffer--только-чтение)
+        + [__(JFile)object.path__](#jfile-objectpath-string--только-чтение---только-в-nodejs)
     + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-1)
         + [__JFile.load()__](#jfileloadfile)
 + [__Класс JFileList__](#класс-jfilelist)
@@ -167,8 +167,8 @@ _(значение по умолчанию: 'http')_
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
-    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
-    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
+    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
+    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
@@ -211,9 +211,9 @@ Jax.get('http://example/jax-get',{
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера). Способ отправки зависит от нескольких факторов, подробнее об этом смотрите ниже - [Перейти]
-    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types)
-    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
-    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
+    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types-object)
+    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
+    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
@@ -355,9 +355,9 @@ if(files && files?.length){
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
-    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
-    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types)
-    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
+    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
+    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types-object)
+    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
@@ -385,8 +385,8 @@ if(files && files?.length){
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
-    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
-    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
+    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
+    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
@@ -415,8 +415,8 @@ if(files && files?.length){
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _File | FileList | JFile | JFileList_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
     - __params.isMultipart__ ( _Boolean_ ) - Отправить данные с заголовком multipart/form-data (по умолчанию true)
-    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types)
-    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials)
+    - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
+    - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
