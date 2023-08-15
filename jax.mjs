@@ -1,4 +1,4 @@
-import { JFile, JFileList, JFormData, JBuffer} from './classes.mjs'
+import { JFile, JFileList, JFormData, JBuffer, Url} from './classes.mjs'
 class Jax{
 
     /** Переменная для определения отправляется ли запрос с серверного приложения или клиента(браузера) */
@@ -1077,46 +1077,6 @@ class JaxRequest{
         return value;
     }
 
-    #convertToUrl(params, add=''){
-        let result = []
-        let data
-        try{
-            if(params instanceof Map || (typeof FormData === 'function' && params instanceof FormData) || params instanceof JFormData) data = params.entries()
-            else if(params instanceof Object) data = Object.entries(params)
-            if(Array.isArray(params) && add == '')
-                throw new Error(`Top-level parameters cannot be converted to a URL. They shouldn't be array.`)
-            if(data){
-                for(let [key,item] of data){
-                    let keyData = Array.isArray(params) ? (Array.isArray(item) ? `[${key}]`:'[]') : (add != '' ? `[${key}]` : key)
-                    if(item instanceof JFile 
-                        || item instanceof JFileList 
-                        || (typeof File === 'function' && item instanceof File)
-                        || (typeof FileList === 'function' && item instanceof FileList)
-                        || item === undefined ) continue
-                    if(item instanceof Object){
-                        let itemData = item instanceof Map ? item : Object.entries(item)
-                        for(let [el,value] of itemData){
-                            let elData = Array.isArray(item) ? (Array.isArray(value) ? el : '') : el
-                            if(value===null) 
-                                result.push(`${add}${keyData}[${elData}]=null`)
-                            else if(value instanceof Object){
-                                result.push(this.#convertToUrl(value,`${add}${keyData}[${elData}]`))
-                            }
-                            else 
-                                result.push(`${add}${keyData}[${elData}]=${encodeURIComponent(value.toString())}`) 
-                        }
-                    }else{
-                        if(item==null) result.push(`${add}${keyData}=null`)  
-                        else result.push(`${add}${keyData}=${encodeURIComponent(item.toString())}`)    
-                    }
-                }
-            }
-            return result.length ? result.join('&') : ''
-        }catch(err){
-            throw err
-        }
-    }
-
     #convertParams(params,file=false){
         return new Promise(async (resolve, reject) => {
             try {
@@ -1137,12 +1097,12 @@ class JaxRequest{
                                 if (container.querySelector('input[type="file"]')) 
                                     throw new Error('Sending a file using the GET method is not possible')
                                 let data = await JFormData.fromDOM(container)
-                                this.#url += '?' + this.#convertToUrl(data)
+                                this.#url += Url.encode(data, this.#url)
                             }else{
                                 throw new Error('Form element with id not found!')
                             }
                         }else if (params.body instanceof Object && !(typeof HTMLElement === 'function' && params.body instanceof HTMLElement)) {
-                            this.#url += '?' + this.#convertToUrl(params.body)
+                            this.#url += Url.encode(params.body, this.#url)
                         } 
                     }
                 } else if (file && params?.body !== undefined) {
@@ -1231,7 +1191,7 @@ class JaxRequest{
                                                 throw new Error('Failed to convert data to multipart/form-data!')
                                             break
                                         case Jax.SEND_TYPES.URL:
-                                            this.#body = this.#convertToUrl(params.body)
+                                            this.#body = Url.encode(params.body)
                                             break
                                     }
                                 }
@@ -1260,7 +1220,7 @@ class JaxRequest{
                                         throw new Error('Failed to convert data to multipart/form-data!')
                                     break
                                 case Jax.SEND_TYPES.URL:
-                                    this.#body = this.#convertToUrl(params.body)
+                                    this.#body = Url.encode(params.body)
                                     break
                             }
                         }

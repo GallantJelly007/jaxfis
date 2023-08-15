@@ -1,4 +1,4 @@
-import Jax from './jax.js'
+import Jax from './jax.mjs'
 
 export class JFormData{
     
@@ -219,6 +219,138 @@ export class JFormData{
     isset(name){
         return this.#data.has(name)
     }  
+}
+
+export class Url{
+
+    /**
+     * Функция для преобразования объекта параметров в URL
+     * @param {Map|FormData|JFormData|Object} params 
+     * Объект с параметрами
+     * @param {string} addr 
+     * Адресная строка без параметров
+     * @param {string} add 
+     * Добавочный параметр для обработки вложенных объектов
+     * @returns {string} Готовая строка URL
+     */
+    static encode(params, addr='', add=''){
+        let result = []
+        let data
+        try{
+            if(params instanceof Map || (typeof FormData === 'function' && params instanceof FormData) || params instanceof JFormData) data = params.entries()
+            else if(params instanceof Object) data = Object.entries(params)
+            if(Array.isArray(params) && add == '')
+                throw new Error(`Top-level parameters cannot be converted to a URL. They shouldn't be array.`)
+            if(data){
+                for(let [key,item] of data){
+                    let keyData = Array.isArray(params) ? (Array.isArray(item) ? `[${key}]`:'[]') : (add != '' ? `[${key}]` : key)
+                    if(item instanceof JFile 
+                        || item instanceof JFileList 
+                        || (typeof File === 'function' && item instanceof File)
+                        || (typeof FileList === 'function' && item instanceof FileList)
+                        || item === undefined ) continue
+                    if(item instanceof Object){
+                        let itemData = item instanceof Map ? item : Object.entries(item)
+                        for(let [el,value] of itemData){
+                            let elData = Array.isArray(item) ? (Array.isArray(value) ? el : '') : el
+                            if(value===null) 
+                                result.push(`${add}${keyData}[${elData}]=null`)
+                            else if(value instanceof Object){
+                                result.push(Url.encode(value, '', `${add}${keyData}[${elData}]`))
+                            }
+                            else 
+                                result.push(`${add}${keyData}[${elData}]=${encodeURIComponent(value.toString())}`) 
+                        }
+                    }else{
+                        if(item==null) result.push(`${add}${keyData}=null`)  
+                        else result.push(`${add}${keyData}=${encodeURIComponent(item.toString())}`)    
+                    }
+                }
+            }
+            return result.length ? (addr === '' ? result.join('&') : `${addr}?${result.join('&')}`) : (addr === '' ? '' : addr )
+        }catch(err){
+            throw err
+        }
+    }
+
+
+    /**
+     * Функция для преобразования параметров из URL в объект
+     * @param {string} url
+     * Строка URL параметров
+     * @returns {Object}
+     * Возвращает объект с параметрами
+     */
+    static decode(url){
+		let result={}
+        let arr = url.split('?')
+        if(arr.length>1){
+            arr.shift()
+            url=arr.shift()
+        }
+		let data = url.split("&")
+		let getValue = (value) => {
+			if (!isNaN(Number(value)))
+				return Number(value)
+			else if (value.toLowerCase() === 'true')
+				return true
+			else if (value.toLowerCase() === 'false')
+				return false
+			else if (value.toLowerCase() === 'null')
+				return null
+			else
+				return value
+		}
+		for (let prop of data) {
+			let arrProp = prop.split('=')
+			if(arrProp.length == 2){
+				let name = arrProp.shift()
+				let value = decodeURIComponent(arrProp.pop())
+				if (/\[[\w\-]*\]/.test(name)) {
+					let parts = name.replace(/\[([A-Za-z_]+[\w\-]+)\]/g,'.$1').split('.')
+					let current=result
+					for(let i=0;i<parts.length;i++){
+						let p = parts[i]
+						if(/\[[0-9]*\]/.test(p)){
+							let match = p.match(/\[[0-9]*\]/g)
+							p = p.replace(/\[[0-9]*\]/g,'')
+							if(current?.[p]===undefined)
+								current[p]=[]
+							for(let index = 0; index<match.length; index++){
+								if(index+1!=match.length){
+									let innerIndex
+									if(/\[[0-9]+\]/.test(match[index]))
+										innerIndex = Number(match[index].replace(/[\[\]]/g,''))
+									if(innerIndex && !isNaN(innerIndex)){
+										if(!(innerIndex in current[p]))
+											current[p][innerIndex] = []
+										current = current[p]
+										p = innerIndex
+									}
+								}
+							}
+						}else{
+							if(current?.[p]===undefined)
+								current[p]={}
+						}
+						if(i+1==parts.length){
+							if(Array.isArray(current[p])){
+								current[p].push(getValue(value))
+							}else{
+								current[p] = getValue(value)
+							}
+						}else{
+							current = current[p]
+						}
+					}
+				} else {
+					result[name] = getValue(value)
+				}
+			}
+		}
+		return result
+	}
+
 }
 
 export class JFile{

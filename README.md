@@ -65,6 +65,10 @@
         + [__(JBuffer)object.concat()__](#jbufferobjectconcatbuffers)
         + [__(JBuffer)object.split()__](#jbufferobjectsplitlenall)
         + [__(JBuffer)object.toText()__](#jbufferobjecttotext)
++ [__Класс Url__](#класс-jbuffer)
+    + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-4)
+        + [__Url.encode()__](#jbufferconstructorbuffer)
+        + [__Url.decode()__](#jbufferconstructorbuffer)
 
 &nbsp;
 
@@ -861,6 +865,7 @@ console.log(list.push(file2)) // Выведет false
 #### __Параметры:__
 - __len__ ( _Number_ ) - Длина/смещение по которому разбивается буфер
 - __all__ ( _Boolean_ ) ( _не обязательный_ ) - Параметр указывающий разбивать ли весь буфер до конца (по умолчанию - true)
+
 #### __Возврат:__
 ( ___Array\<JBuffer\> | undefined___ ) Возвращает массив с JBuffer объектами в случае успешного выполнения
 
@@ -877,6 +882,88 @@ console.log(list.push(file2)) // Выведет false
 
 &nbsp;
 
+
+&nbsp;
+## __Класс Url__
+
+Вспомогательный класс для преобразования данных из объектов и коллекций в URL адрес и обратно
+
+### __Функции__
+
+#### __Url.encode(params, addr, add)__ 
+
+Функция для преобразования объекта параметров в URL
+
+#### __Параметры:__
+- __params__ ( _Map | FormData | JFormData | Object_ ) - Объект параметров
+- __addr__ ( _String_ )( _не обязательный_ ) - Адресная строка без параметров
+- __add__ ( _String_ )( _не обязательный_ ) - Добавочный параметр для обработки вложенных объектов
+
+#### __Возврат:__
+( ___String___ ) Возвращает URL строку
+
+__Пример:__
+```js
+let object={
+    user:'Alex',
+    age:18,
+    settings:{
+        player:{
+            volume:[10,15],
+            mute:true
+        }
+    },
+    location:[100,200,[500,550]]
+}
+
+console.log(Url.encode(object,'http://example.com/user')) // Преобразует в url адрес с параметрами
+/* Вывод: http://example.com/user?user=Alex&age=18&settings[player][volume][]=10&settings[player][volume][]=15&settings[player][mute]=true&location[]=100&location[]=200&location[2][]=500&location[2][]=550 */
+
+console.log(Url.encode(object)) // Преобразует в url параметры
+/* user=Alex&age=18&settings[player][volume][]=10&settings[player][volume][]=15&settings[player][mute]=true&location[]=100&location[]=200&location[2][]=500&location[2][]=550 */
+```
+
+&nbsp;
+
+---
+&nbsp;
+#### __Url.decode(url)__ 
+
+Функция для преобразования параметров из URL в объект
+
+#### __Параметры:__
+- __url__ ( _String_ ) - Строка URL параметров
+
+#### __Возврат:__
+( ___Object___ ) Возвращает объект с параметрами
+
+__Пример:__
+```js
+let url = 'http://example.com/user?user=Alex&age=18&settings[player][volume][]=10&settings[player][volume][]=15&settings[player][mute]=true&location[]=100&location[]=200&location[2][]=500&location[2][]=550'
+
+let urlParam = 'user=Alex&age=18&settings[player][volume][]=10&settings[player][volume][]=15&settings[player][mute]=true&location[]=100&location[]=200&location[2][]=500&location[2][]=550'
+
+console.log(Url.decode(url)) 
+console.log(Url.decode(urlParam)) 
+
+/* В вариантах с адресом и без, адрес будет отсекаться, в результате будет получен следующий объект:
+{
+    user:'Alex',
+    age:18,
+    settings:{
+        player:{
+            volume:[10,15],
+            mute:true
+        }
+    },
+    location:[100,200,[500,550]]
+}
+/*
+```
+
+&nbsp;
+
+---
 &nbsp;
 
 
