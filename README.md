@@ -65,10 +65,10 @@
         + [__(JBuffer)object.concat()__](#jbufferobjectconcatbuffers)
         + [__(JBuffer)object.split()__](#jbufferobjectsplitlenall)
         + [__(JBuffer)object.toText()__](#jbufferobjecttotext)
-+ [__Класс Url__](#класс-jbuffer)
-    + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-4)
-        + [__Url.encode()__](#jbufferconstructorbuffer)
-        + [__Url.decode()__](#jbufferconstructorbuffer)
++ [__Класс Url__](#класс-url)
+    + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-5)
+        + [__Url.encode()__](#urlencodeparams-addr-add)
+        + [__Url.decode()__](#urldecodeurl)
 
 &nbsp;
 
