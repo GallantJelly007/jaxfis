@@ -421,9 +421,9 @@ export class JFile{
                         let fullName = path.basename(file)
                         let nameParts = fullName.split('.')
                         let ext = `.${(nameParts.pop())?.toLowerCase()}`
-                        if (stat && ext && stat.isFile() && Array.from(Jax.MIME_FILES.values()).includes(ext)) {
-                            let contentType = Array.from(Jax.MIME_FILES.keys())
-                                .find(key => Jax.MIME_FILES.get(key) == ext)
+                        let mime = Jax.MIME_FILES.find(([key,value])=>value==ext)
+                        if (stat && ext && stat.isFile() && mime) {
+                            let contentType = mime[0]
                             if (contentType) {
                                 outputFile.#path = file
                                 outputFile.#fullName = fullName

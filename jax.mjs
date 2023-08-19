@@ -28,7 +28,7 @@ class Jax{
         ALL_SEND:3,
     }
 
-    static #mimeFiles = new Map([
+    static #mimeFiles = [
         ['application/vnd.hzn-3d-crossword','.x3d'],
         ['video/3gpp','.3gp'],
         ['video/3gpp2','.3g2'],
@@ -732,7 +732,7 @@ class Jax{
         ['application/zip','.zip'],
         ['application/vnd.handheld-entertainment+xml','.zmm'],
         ['application/vnd.zzazz.deck+xml','.zaz']
-    ]);
+    ];
 
     static setSSL(isSet=true){
         this.#protocol = isSet?'https':'http'
@@ -1137,7 +1137,8 @@ class JaxRequest{
                             let file = (typeof File === 'function' && params.body instanceof File) 
                                         ? await JFile.load(params.body) 
                                         : (params.body instanceof JFile ? params.body : undefined)
-                            if (file && Array.from(Jax.MIME_FILES.keys()).includes(file.contentType)){
+                            let mime = Jax.MIME_FILES.find(([key,value])=>key==file.contentType)
+                            if (file && mime){
                                 this.#headers.set('Content-type',file.contentType)
                                 this.#body = file.data
                             }else{

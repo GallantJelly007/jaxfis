@@ -10,7 +10,7 @@
         + [__Jax.SEND_TYPES__](#jaxsend_types-object)
         + [__Jax.RESPONSE_TYPES__](#jaxresponse_types-object)
         + [__Jax.CREDENTIALS__](#jaxcredentials-object)
-        + [__Jax.MIME_FILES__](#jaxmime_files-map-только-чтение)
+        + [__Jax.MIME_FILES__](#jaxmime_files-arrayanyany-только-чтение)
         + [__Jax.PROTOCOL__](#jaxprotocol-string-только-чтение)
         + [__Jax.useFetch__](#jaxusefetch-boolean)
         + [__Jax.isServer__](#jaxisserver-boolean)
@@ -128,8 +128,8 @@ __Jax__ это универсальный кросс-платформенный 
 
 &nbsp;
 
-#### __Jax.MIME_FILES__ _(Map)_ _(только чтение)_
-Представляет коллекцию mime-типов, где ключи = типам, а значения = расширение файла __( Пример: \['video/3gpp','.3gp'\] )__
+#### __Jax.MIME_FILES__ _(Array<[any,any]>)_ _(только чтение)_
+Представляет массив mime-типов в котором тип и расширение хранятся по парам __( Пример: \['video/3gpp','.3gp'\] )__
 &nbsp;
 
 &nbsp;
