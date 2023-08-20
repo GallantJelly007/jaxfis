@@ -50,6 +50,7 @@
         + [__(JFormData)object.from()__](#jformdataobjectfromparams)
         + [__(JFormData)object.fromDOM()__](#jformdataobjectfromdomparams)
         + [__(JFormData)object.get()__](#jformdataobjectgetname)
+        + [__(JFormData)object.getAll()__](#jformdataobjectgetall)
         + [__(JFormData)object.set()__](#jformdataobjectsetnamevalue)
         + [__(JFormData)object.isset()__](#jformdataobjectissetname)
         + [__(JFormData)object.delete()__](#jformdataobjectdeletename)
@@ -692,6 +693,17 @@ console.log(list.push(file2)) // Выведет false
 
 #### __Возврат:__
 ( ___any___ ) Возвращает значение по его ключу если оно есть
+
+&nbsp;
+
+---
+&nbsp;
+#### __(JFormData)object.getAll()__ 
+
+Функция для получения всех значений JFormData в виде Map коллекции
+
+#### __Возврат:__
+( ___Map___ ) Возвращает Map-коллекцию
 
 &nbsp;
 

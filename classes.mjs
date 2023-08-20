@@ -182,6 +182,14 @@ export class JFormData{
     }
 
     /**
+     * Функция для получения всех значений JFormData в виде Map коллекции
+     * @returns {Map}
+     */
+    getAll(){
+        return new Map(this.#data)
+    }
+
+    /**
      * Добавление нового значения в JFormData
      * @param {string} name 
      * @param {any} value 
