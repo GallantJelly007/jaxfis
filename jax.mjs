@@ -1094,9 +1094,7 @@ class JaxRequest{
                         if (typeof HTMLFormElement === 'function' && (params.body instanceof HTMLFormElement || typeof params.body === 'string')) {
                             let container = (typeof HTMLFormElement ==='function' && params.body instanceof HTMLFormElement) ? params.body : document.getElementById(params.body)
                             if(container){
-                                if (container.querySelector('input[type="file"]')) 
-                                    throw new Error('Sending a file using the GET method is not possible')
-                                let data = await JFormData.fromDOM(container)
+                                let data = await JFormData.fromDOM(container, true)
                                 this.#url = Url.encode(data, this.#url)
                             }else{
                                 throw new Error('Form element with id not found!')

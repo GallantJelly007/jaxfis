@@ -48,7 +48,7 @@
 + [__Класс JFormData__](#класс-jformdata)
     + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-3)
         + [__(JFormData)object.from()__](#jformdataobjectfromparams)
-        + [__(JFormData)object.fromDOM()__](#jformdataobjectfromdomparams)
+        + [__(JFormData)object.fromDOM()__](#jformdataobjectfromdomparams-filterfiles)
         + [__(JFormData)object.get()__](#jformdataobjectgetname)
         + [__(JFormData)object.getAll()__](#jformdataobjectgetall)
         + [__(JFormData)object.set()__](#jformdataobjectsetnamevalue)
@@ -226,7 +226,7 @@ Jax.get('http://example/jax-get',{
 
 __Пример POST-запроса:__
 ```js
-Jax.post('http://example/jax-get',{
+Jax.post('http://example/jax-post',{
     body:{
         user:'TestUser',
         age:18,
@@ -435,7 +435,7 @@ __Пример отправки файлов:__
 let fileInput = document.getElementById('file')
 let files = await JFileList.load(fileInput.files)
 if(files && files?.length){
-	Jax.file('http://localhost:3003/jax-test', {
+	Jax.file('http://example/send-files', {
 		body: files,
 	}).then(result => {
 		console.log(result)
@@ -670,12 +670,13 @@ console.log(list.push(file2)) // Выведет false
 
 ---
 &nbsp;
-#### __(JFormData)object.fromDOM(params)__ 
+#### __(JFormData)object.fromDOM(params, filterFiles)__ 
 
 Функция для получения данных из HTML формы и их записи в новый JFormData объект
 
 #### __Параметры:__
 - __params__ ( _HTMLFormElement | string_ ) - элемент HTML формы либо его id
+- __filterFiles__ ( _Boolean_ ) ( _не обязательный_ ) - Параметр указывающий нужно ли отфильтровывать поля input\[type="file"\] (по умолчанию - false)
 
 #### __Возврат:__
 ( ___Promise\<JFormData\>___ ) Возвращает промис с новым объектом JFormData

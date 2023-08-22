@@ -8,10 +8,12 @@ export class JFormData{
      * Статическая асинхронная функция для получения данных из HTML-формы и преобразования их в новый объект JFormData
      * @param {HTMLFormElement|string} params 
      * HTML форма или её id
+     * @param {boolean} filterFiles
+     * Если true - фильтрует input[type="file"]
      * @returns {Promise<JFormData>}
      * Объект JFormData с данными из HTML-формы
      */
-    static async fromDOM(params){
+    static async fromDOM(params, filterFiles=false){
         let formData = new JFormData()
         let form
         if(typeof HTMLFormElement === 'function' && params instanceof HTMLFormElement)
@@ -35,7 +37,7 @@ export class JFormData{
                         else values.push(item.checked)
                         formData.#data.set(item.name, values)
                     }else if(item.type.toLowerCase() === 'file'){
-                        if(item.files!=null && item.files.length){
+                        if(item.files!=null && item.files.length && !filterFiles){
                             let files = await JFileList.load(item.files)
                             if(files)
                                 formData.#data.set(item.name, files)
