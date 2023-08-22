@@ -47,7 +47,7 @@
         + [__(JFileList)object.toString()__](#jfilelist-objecttostring)
 + [__Класс JFormData__](#класс-jformdata)
     + [__Функции__](#d184d183d0bdd0bad186d0b8d0b8-3)
-        + [__(JFormData)object.from()__](#jformdataobjectfromparams)
+        + [__(JFormData)object.from()__](#jformdataobjectfromparams-filterfiles)
         + [__(JFormData)object.fromDOM()__](#jformdataobjectfromdomparams-filterfiles)
         + [__(JFormData)object.get()__](#jformdataobjectgetname)
         + [__(JFormData)object.getAll()__](#jformdataobjectgetall)
@@ -390,6 +390,7 @@ if(files && files?.length){
 - __params__ ( _Object_ ) - Объект с параметрами запроса
     - __params.headers__ ( _Map<string,string>_)(_не обязательный_ ) - Коллекция дополнительных заголовков запроса, где ключ - наименование заголовка. __Сontent-Type заголовок добавлять не нужно!__
     - __params.body__ ( _Object | JFormData | FormData | Map | HTMLFormElement | string_ )( _не обязательный_ ) - Тело запроса, может быть объектом, формой, HTML-элементом либо строкой(id формы, только для браузера), все данные будут закодированны в виде URL строки при отправке. Файлы отправлять нельзя
+    - __params.sendType__ ( _String_ )( _не обязательный_ ) - Устанавливает способ отправки, смотреть - [Jax.SEND_TYPES](#jaxsend_types-object)
     - __params.responseType__ ( _String_ )( _не обязательный_ ) - Устанавливает тип ответа, смотреть - [Jax.RESPONSE_TYPES](#jaxresponse_types-object)
     - __params.credentials__ ( _String_ )( _не обязательный_ ) - Параметр для установки разрешения на отправку учетных данных, смотреть - [Jax.CREDENTIALS](#jaxcredentials-object)
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
@@ -405,6 +406,20 @@ if(files && files?.length){
 
 Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
 ```
+
+__Обратите внимание__ что при отправке запроса DELETE с sendType = _application/x-www-form-urlencoded_ все данные будут преобразованы в url строку но при этом переданы в тело запроса как и в методах POST/PUT, если вы хотите передать параметры
+в url строке адреса, нужно сделать это вручную. Для этого можно использовать класс [Url](#класс-url), например:
+
+```js
+let url = Url.encode({user: 'Alex', age: 18,},'http://example/delete-url-test')
+
+Jax.delete(url).then(res => {
+	console.log(`DELETE success: ${res}`)
+}).catch(err => {
+	console.log(`DELETE error: ${err}`)
+})
+```
+
 
 &nbsp;
 
@@ -656,12 +671,13 @@ console.log(list.push(file2)) // Выведет false
 
 ### __Функции__
 
-#### __(JFormData)object.from(params)__ 
+#### __(JFormData)object.from(params, filterFiles)__ 
 
 Функция для преобразования объектов и коллекций в объект JFormData 
 
 #### __Параметры:__
 - __params__ ( _JFormData | Map | Object_ ) - Map коллекция или объект
+- __filterFiles__ ( _Boolean_ ) ( _не обязательный_ ) - Если true - фильтрует файловые классы (File,FileList,JFile,JFileList) (по умолчанию - false)
 
 #### __Возврат:__
 ( ___Promise\<JFormData\>___ ) Возвращает промис с новым объектом JFormData

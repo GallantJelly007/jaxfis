@@ -905,6 +905,14 @@ class Jax{
      * blob - Данные в Blob
      * 
      * document - Данные как XML/HTTP документ
+     * @param {string|undefined} [params.sendType]
+     * Тип отправки данных, устанавливает ContentType заголовок, поэтому его не нужно передавать в headers, типы отправки:
+     * 
+     * url - (По умолчанию) Отправляет данные как URL-строку
+     * 
+     * json - Отправляет данные в JSON формате с заголовком application/json
+     * 
+     * form - Отправляет данные с помощью FormData и заголовком multipart/form-data
      * 
      * @param {number|undefined} [params.credentials]
      * Устанавливает credentials для кросс-доменных запросов. Значение из Jax.CREDENTIALS
@@ -1088,7 +1096,7 @@ class JaxRequest{
                         }
                     }
                 }
-                if (this.#method == 'GET' || this.#method == 'DELETE') {
+                if (this.#method == 'GET') {
                     this.#headers.set('Content-type', 'application/x-www-form-urlencoded')
                     if (params?.body !== undefined && params?.body !== null) {
                         if (typeof HTMLFormElement === 'function' && (params.body instanceof HTMLFormElement || typeof params.body === 'string')) {
@@ -1148,7 +1156,8 @@ class JaxRequest{
                     }
                 } else {
                     let sendType = 'url'
-                    this.#headers.set('Content-type', 'application/x-www-form-urlencoded');
+                    this.#headers.set('Content-type', 'application/x-www-form-urlencoded')
+                    let filterFiles = this.#method == 'DELETE'
                     if (typeof params?.sendType === 'string') {
                         switch (params.sendType) {
                             case Jax.SEND_TYPES.JSON:
@@ -1169,8 +1178,8 @@ class JaxRequest{
                         if (typeof HTMLFormElement === 'function' && (params.body instanceof HTMLFormElement || (typeof params.body === 'string' && !this.#isServer))) {
                             let container = (typeof HTMLFormElement === 'function' && params.body instanceof HTMLFormElement) ? params.body : document.getElementById(params.body)
                             if (container) {
-                                params.body = await JFormData.fromDOM(container)
-                                if (container.querySelector('input[type="file"]') != null) {
+                                params.body = await JFormData.fromDOM(container, filterFiles)
+                                if (container.querySelector('input[type="file"]') != null && !filterFiles) {
                                     this.#headers.set('Content-type', 'multipart/form-data')
                                     let data = await params.body.toMultipart()
                                     if(data)
@@ -1202,7 +1211,7 @@ class JaxRequest{
                             switch (sendType) {
                                 case Jax.SEND_TYPES.JSON:
                                     data = (typeof FormData === 'function' && params.body instanceof FormData) 
-                                    ? (await JFormData.from(params.body)).toObj() 
+                                    ? (await JFormData.from(params.body,filterFiles)).toObj() 
                                     : (params.body instanceof JFormData 
                                         ? params.body.toObj() 
                                         : params.body)
@@ -1212,7 +1221,7 @@ class JaxRequest{
                                     if(params.body instanceof JFormData)
                                         data = await params.body.toMultipart()
                                     else
-                                        data = await (await JFormData.from(params.body)).toMultipart()
+                                        data = await (await JFormData.from(params.body,filterFiles)).toMultipart()
                                     if(data)
                                         this.#body = data
                                     else 
@@ -1368,7 +1377,7 @@ class JaxRequest{
                 req.setRequestHeader(key,value)
             }
             try{
-                if(this.#method=='POST'||this.#method=='PUT') req.send(this.#body)
+                if(this.#method!='GET') req.send(this.#body)
                 else req.send(null)
             }catch(err){
                 reject(err)
@@ -1379,7 +1388,7 @@ class JaxRequest{
     async #sendFetch(){
         return new Promise((resolve,reject) => {
             let options = {}
-            if(this.#method=='POST'||this.#method=='PUT'){
+            if(this.#method!='GET'){
                 options = {
                     method:this.#method,
                     headers:this.#headers,

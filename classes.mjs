@@ -63,10 +63,12 @@ export class JFormData{
      * Статическая асинхронная функция для преобразования объектов и Map коллекций в новый объект JFormData
      * @param {JFormData|Map|object} params 
      * Объект или Map-коллекция с данными
+     * @param {boolean} filterFiles
+     * Если true - фильтрует файловые классы (File,FileList,JFile,JFileList)
      * @returns {Promise<JFormData>}
      * Объект JFormData с данными из объекта или коллекции
      */
-    static async from(params){
+    static async from(params, filterFiles=false){
         if(params instanceof JFormData) return params
         let form = new JFormData()
         let data
@@ -76,16 +78,17 @@ export class JFormData{
             data = Object.entries(params)
         if(data){
             for(let [key,value] of data){
-                if(typeof FileList === 'function' && value instanceof FileList){
+                if(typeof FileList === 'function' && value instanceof FileList && !filterFiles){
                     let files = await JFileList.load(value)
                     if(files)
                         form.#data.set(key,files)
-                }else if(typeof File === 'function' && value instanceof File){
+                }else if(typeof File === 'function' && value instanceof File && !filterFiles){
                     let file = await JFile.load(value)
                     if(file)
                         form.#data.set(key,file)
                 }else{
-                    form.#data.set(key,value)
+                    if(!((value instanceof JFile || value instanceof JFileList) && filterFiles))
+                        form.#data.set(key,value)
                 }
             }
         }
