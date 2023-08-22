@@ -1097,12 +1097,12 @@ class JaxRequest{
                                 if (container.querySelector('input[type="file"]')) 
                                     throw new Error('Sending a file using the GET method is not possible')
                                 let data = await JFormData.fromDOM(container)
-                                this.#url += Url.encode(data, this.#url)
+                                this.#url = Url.encode(data, this.#url)
                             }else{
                                 throw new Error('Form element with id not found!')
                             }
                         }else if (params.body instanceof Object && !(typeof HTMLElement === 'function' && params.body instanceof HTMLElement)) {
-                            this.#url += Url.encode(params.body, this.#url)
+                            this.#url = Url.encode(params.body, this.#url)
                         } 
                     }
                 } else if (file && params?.body !== undefined) {
@@ -1398,7 +1398,7 @@ class JaxRequest{
                         case Jax.RESPONSE_TYPES.BLOB:
                             return data.blob()
                         case Jax.RESPONSE_TYPES.BUFFER:
-                            return new JBuffer(data.arrayBuffer())
+                            return new JBuffer(await data.arrayBuffer())
                         case Jax.RESPONSE_TYPES.JSON:
                             return data.json()
                         default:

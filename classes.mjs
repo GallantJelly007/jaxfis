@@ -724,6 +724,8 @@ export class JBuffer extends Uint8Array{
             }else{
                 super()
             }
+        }else{
+            super()
         }
     }
 
