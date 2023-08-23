@@ -808,6 +808,17 @@ class Jax{
      */
 
     static async post(url,params){
+        if(!url || typeof url != 'string')
+            throw new Error('Url param must be of type string!')
+        if(!params)
+            params = {}
+        if(typeof params == 'object' && !params?.body){
+            let destructUrl = url.split('?')
+            if(destructUrl.length>1){
+                params.body = Url.decode(url)
+                url = destructUrl.shift()
+            }
+        }
         let request = new JaxRequest('POST')
         return request.executeRequest(url,params);
     }
@@ -839,6 +850,8 @@ class Jax{
      * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async get(url,params){
+        if(!url || typeof url != 'string')
+            throw new Error('Url param must be of type string!')
         let request = new JaxRequest('GET')
         return request.executeRequest(url,params);
     }
@@ -881,6 +894,17 @@ class Jax{
      * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async put(url,params){
+        if(!url || typeof url != 'string')
+            throw new Error('Url param must be of type string!')
+        if(!params)
+            params = {}
+        if(typeof params == 'object' && !params?.body){
+            let destructUrl = url.split('?')
+            if(destructUrl.length>1){
+                params.body = Url.decode(url)
+                url = destructUrl.shift()
+            }
+        }
         let request = new JaxRequest('PUT')
         return request.executeRequest(url,params);
     }
@@ -922,6 +946,8 @@ class Jax{
      * @returns {Promise<object>} Возвращает Promise c результатом в случае успешного выполнения 
      */
     static async delete(url,params){
+        if(!url || typeof url != 'string')
+            throw new Error('url param must be of type string!')
         let request = new JaxRequest('DELETE')
         return request.executeRequest(url,params);
     } 
@@ -962,6 +988,8 @@ class Jax{
      * (При установке isMultipart:false и передаче FileList возвращает массив с результатами всех промисов)
      */
     static async file(url,params){
+        if(!url || typeof url != 'string')
+            throw new Error('url param must be of type string!')
         if((typeof File === 'function' && params?.body instanceof File) 
         || (typeof FileList === 'function' && params?.body instanceof FileList)
         || params?.body instanceof JFile
@@ -1268,7 +1296,7 @@ class JaxRequest{
                     : (typeof this.#body ==='string' 
                         ? new JBuffer(this.#body).length
                         : 0)
-                if(this.#method=='POST'||this.#method=='PUT') this.#headers.set('Content-Length',length)
+                if(this.#method != 'GET') this.#headers.set('Content-Length',length)
                 http = (await import(this.#protocol)).default
                 str = str.split('/')
                 let host = str.shift()
@@ -1341,7 +1369,7 @@ class JaxRequest{
                     });
                 })
                 req.on('error', (err) => reject(err))
-                if(this.#method=='POST'||this.#method=='PUT') req.write(this.#body)
+                if(this.#method != 'GET') req.write(this.#body)
                 req.end()
             } catch (err) {
                 reject(err)
