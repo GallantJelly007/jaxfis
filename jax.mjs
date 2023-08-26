@@ -1013,6 +1013,25 @@ class Jax{
             throw new Error('params.body must be of type File, FileList, Jfile or JFileList!')
         }  
     }
+
+    static jsonMapReplacer(key, value){
+        if (value instanceof Map) {
+            return {
+                bodyType: 'Map',
+                value: Array.from(value.entries()), 
+            }
+        } else {
+            return value
+        }
+    }
+
+    static jsonMapReviewer(key, value) {
+        if(value instanceof Object) {
+            if (value?.bodyType === 'Map')
+                return new Map(value.value)
+        }
+        return value
+    }
 }
 
 class JaxRequest{
@@ -1091,25 +1110,6 @@ class JaxRequest{
                     return false
             }
         }
-    }
-
-    static jsonMapReplacer(key, value){
-        if (value instanceof Map) {
-            return {
-                bodyType: 'Map',
-                value: Array.from(value.entries()), 
-            }
-        } else {
-            return value
-        }
-    }
-
-    static jsonMapReviewer(key, value) {
-        if(value instanceof Object) {
-            if (value?.bodyType === 'Map')
-                return new Map(value.value)
-        }
-        return value
     }
 
     #convertParams(params,file=false){
