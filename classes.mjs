@@ -99,19 +99,19 @@ export class JFormData{
         let chars, result = ''
         switch (type) {
             case 'chars': chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                break;
+                break
             case 'caps-chars': chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                break;
+                break
             case 'numbers': chars = '0123456789'
-                break;
+                break
             case 'chars-numbers': chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                break;
+                break
             case 'code': chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                break;
+                break
             case 'all': chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@_'
-                break;
+                break
             default: chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@_'
-                break;
+                break
         }
         for (let i = 0; i < length; i++) {
             result += chars[Math.round(Math.random() * length)]
@@ -147,17 +147,17 @@ export class JFormData{
                 }
                 if(isFiles){
                     for(let file of data){
-                        multipartData += `${boundary}\r\n`;
+                        multipartData += `${boundary}\r\n`
                         multipartData += `Content-Disposition: form-data; name="${key}"; filename="${file.fullName}"\r\n`
-                        multipartData += `Content-Type:${file.contentType}\r\n\r\n`;
+                        multipartData += `Content-Type:${file.contentType}\r\n\r\n`
                         result = result.concat([
                             new JBuffer(multipartData),
                             file.data,
                             new JBuffer(`\r\n`)
-                        ]);
+                        ])
                     }
                 }else{
-                    multipartData += `${boundary}\r\n`;
+                    multipartData += `${boundary}\r\n`
                     multipartData += `Content-Disposition: form-data; name="${key}"\r\n\r\n${data.toString()}\r\n`
                     result = result.concat(new JBuffer(multipartData))
                 }
@@ -576,7 +576,7 @@ export class JFileList{
             Object.defineProperty(this, (this.#length-1) , {
                 value: file,
                 writable: false
-            });
+            })
             return true
         }
         return false
@@ -608,7 +608,7 @@ export class JFileList{
                 Object.defineProperty(this, i , {
                     value: this[i+1],
                     writable: false
-                });
+                })
             }
             return file
         }
@@ -627,12 +627,12 @@ export class JFileList{
                 Object.defineProperty(this, i , {
                     value: this[i-1],
                     writable: false
-                });
+                })
             }
             Object.defineProperty(this, 0 , {
                 value: file,
                 writable: false
-            });
+            })
             this.#length++
             return true
         }

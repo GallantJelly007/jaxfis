@@ -21,6 +21,8 @@
         + [__Jax.put()__](#jaxputurlparams)
         + [__Jax.delete()__](#jaxdeleteurlparams)
         + [__Jax.file()__](#jaxfileurlparams)
+        + [__Jax.jsonMapReplacer()__](#jaxjsonmapreplacerkeyvalue)
+        + [__Jax.jsonMapReviewer()__](#jaxjsonmapreviewerkeyvalue)
 + [__Класс JFile__](#класс-jfile)
     + [__Поля и свойства__](#d0bfd0bed0bbd18f-d0b8-d181d0b2d0bed0b9d181d182d0b2d0b0-1)
         + [__(JFile)object.contentType__](#jfile-objectcontenttype-string--только-чтение)
@@ -437,7 +439,6 @@ Jax.delete(url).then(res => {
 })
 ```
 
-
 &nbsp;
 
 ---
@@ -477,6 +478,36 @@ if(files && files?.length){
 }
 
 ```
+
+&nbsp;
+
+---
+&nbsp;
+#### __Jax.jsonMapReplacer(key,value)__ 
+
+Функция для правильной сериализации Map в json с помощью функции JSON.stringify()
+
+#### __Параметры:__
+- __key__ ( _any_ ) - наименование параметра
+- __value__ ( _any_ ) - значение
+
+#### __Возврат:__
+( ___Object___ ) Возвращает Map преобразованный в объект
+
+&nbsp;
+
+---
+&nbsp;
+#### __Jax.jsonMapReviewer(key,value)__ 
+
+Функция для правильной десериализации Map с помощью функции JSON.parse() (_работает только для Map сериализованных с помощью [Jax.jsonMapReplacer](#jaxjsonmapreplacerkeyvalue)_)
+
+#### __Параметры:__
+- __key__ ( _any_ ) - наименование параметра
+- __value__ ( _any_ ) - значение
+
+#### __Возврат:__
+( ___Map___ ) Преобразует сериализованные объекты в Map если в них есть свойство __bodyType:'Map'__
 &nbsp;
 
 

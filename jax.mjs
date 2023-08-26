@@ -732,7 +732,7 @@ class Jax{
         ['application/zip','.zip'],
         ['application/vnd.handheld-entertainment+xml','.zmm'],
         ['application/vnd.zzazz.deck+xml','.zaz']
-    ];
+    ]
 
     static setSSL(isSet=true){
         this.#protocol = isSet?'https':'http'
@@ -820,7 +820,7 @@ class Jax{
             }
         }
         let request = new JaxRequest('POST')
-        return request.executeRequest(url,params);
+        return request.executeRequest(url,params)
     }
     /**
      * Асинхронная функция отправки GET-запроса
@@ -853,7 +853,7 @@ class Jax{
         if(!url || typeof url != 'string')
             throw new Error('Url param must be of type string!')
         let request = new JaxRequest('GET')
-        return request.executeRequest(url,params);
+        return request.executeRequest(url,params)
     }
 
    /**
@@ -906,7 +906,7 @@ class Jax{
             }
         }
         let request = new JaxRequest('PUT')
-        return request.executeRequest(url,params);
+        return request.executeRequest(url,params)
     }
 
     /**
@@ -949,7 +949,7 @@ class Jax{
         if(!url || typeof url != 'string')
             throw new Error('url param must be of type string!')
         let request = new JaxRequest('DELETE')
-        return request.executeRequest(url,params);
+        return request.executeRequest(url,params)
     } 
     
 
@@ -1007,7 +1007,7 @@ class Jax{
                 return Promise.allSettled(promises)
             }else{
                 let request = new JaxRequest('POST')
-                return request.executeRequest(url,params,true);
+                return request.executeRequest(url,params,true)
             }
         }else{
             throw new Error('params.body must be of type File, FileList, Jfile or JFileList!')
@@ -1093,24 +1093,23 @@ class JaxRequest{
         }
     }
 
-    #jsonMapReplacer(key, value){
+    static jsonMapReplacer(key, value){
         if (value instanceof Map) {
             return {
-                dataType: 'Map',
+                bodyType: 'Map',
                 value: Array.from(value.entries()), 
-            };
+            }
         } else {
-            return value;
+            return value
         }
     }
 
-    #jsonMapReviewer(key, value) {
+    static jsonMapReviewer(key, value) {
         if(value instanceof Object) {
-            if (value.bodyType === 'Map') {
-                return new Map(value.value);
-            }
+            if (value?.bodyType === 'Map')
+                return new Map(value.value)
         }
-        return value;
+        return value
     }
 
     #convertParams(params,file=false){
@@ -1217,7 +1216,7 @@ class JaxRequest{
                                 } else {
                                     switch (sendType) {
                                         case Jax.SEND_TYPES.JSON:
-                                            this.#body = JSON.stringify(params.body.toObj(),this.#jsonMapReplacer)
+                                            this.#body = JSON.stringify(params.body.toObj(), Jax.jsonMapReplacer)
                                             break
                                         case Jax.SEND_TYPES.FORM:
                                             let data = await params.body.toMultipart()
@@ -1243,7 +1242,7 @@ class JaxRequest{
                                     : (params.body instanceof JFormData 
                                         ? params.body.toObj() 
                                         : params.body)
-                                    this.#body = JSON.stringify(data,this.#jsonMapReplacer)
+                                    this.#body = JSON.stringify(data, Jax.jsonMapReplacer)
                                     break
                                 case Jax.SEND_TYPES.FORM:
                                     if(params.body instanceof JFormData)
@@ -1344,7 +1343,7 @@ class JaxRequest{
                                         result=data[0].toString('utf8') 
                                     else 
                                         result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
-                                    result = JSON.parse(result);
+                                    result = JSON.parse(result)
                                     break
                                 
                                 case Jax.RESPONSE_TYPES.DOC: 
@@ -1366,7 +1365,7 @@ class JaxRequest{
                             resolve({success:true})
                         }
                         this.#responseType=null
-                    });
+                    })
                 })
                 req.on('error', (err) => reject(err))
                 if(this.#method != 'GET') req.write(this.#body)
