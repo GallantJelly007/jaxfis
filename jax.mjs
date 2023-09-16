@@ -1360,9 +1360,9 @@ class JaxRequest{
                                         result = data.reduce((pValue, cValue) => pValue + cValue.toString('utf8')) 
                                     break
                             }
-                            resolve({data:result,success:true})
+                            resolve({data:result, success:true , headers:new Map(Object.entries(res.headers))})
                         }else{
-                            resolve({success:true})
+                            resolve({success:true, headers:new Map(Object.entries(res.headers))})
                         }
                         this.#responseType=null
                     })
@@ -1378,33 +1378,37 @@ class JaxRequest{
 
     async #send(){
         return new Promise((resolve,reject)=>{
-            let req = this.#create()
-            if (typeof this.#credentials === 'boolean' && !this.#isServer) 
-                req.withCredentials = this.#credentials
-            if(typeof this.#onprogress === 'function')
-                req.upload.onprogress = this.#onprogress
-            req.responseType = this.#responseType
-            req.addEventListener('load',function(ev){
-                this.#onprogress = null
-                this.#credentials = null
-                this.#method = null
-                this.#headers.clear()
-                this.#body=null
-                this.#url=null
-                resolve({data:ev.target.response,success:true})
-            }.bind(this))
-            req.addEventListener('timeout', ()=>{
-                reject(new Error('Request timeout was reached!'))
-            })
-            req.addEventListener('error',function(err){
-                reject(err)
-            }.bind(this))
-            req.open(this.#method,this.#url,true)
-            for(let [key,value] of this.#headers){
-                req.setRequestHeader(key,value)
-            }
             try{
-                if(this.#method!='GET') req.send(this.#body)
+                let req = this.#create()
+                if (typeof this.#credentials === 'boolean' && !this.#isServer)
+                    req.withCredentials = this.#credentials
+                if (typeof this.#onprogress === 'function')
+                    req.upload.onprogress = this.#onprogress
+                req.responseType = this.#responseType
+                req.addEventListener('load', function (ev) {
+                    this.#onprogress = null
+                    this.#credentials = null
+                    this.#method = null
+                    this.#headers.clear()
+                    this.#body = null
+                    this.#url = null
+                    let headersStr = ev.target.getAllResponseHeaders()
+                    let headers = headersStr.split('\r\n').filter(el => !/^\s*$/.test(el))
+                    if (headers.length)
+                        headers = headers.map(el => el.split(':').map(header => header.trim()))
+                    resolve({ data: ev.target.response, success: true, headers: new Map(headers) })
+                }.bind(this))
+                req.addEventListener('timeout', () => {
+                    reject(new Error('Request timeout was reached!'))
+                })
+                req.addEventListener('error', function (err) {
+                    reject(err)
+                }.bind(this))
+                req.open(this.#method, this.#url, true)
+                for (let [key, value] of this.#headers) {
+                    req.setRequestHeader(key, value)
+                }
+                if (this.#method != 'GET') req.send(this.#body)
                 else req.send(null)
             }catch(err){
                 reject(err)
@@ -1428,24 +1432,24 @@ class JaxRequest{
                 .then(async data => {
                     switch(this.#responseType){
                         case Jax.RESPONSE_TYPES.TEXT: 
-                            return data.text()
+                            return { data:data.text(), headers:data.headers }
                         case Jax.RESPONSE_TYPES.BLOB:
-                            return data.blob()
+                            return { data:data.blob(), headers:data.headers }
                         case Jax.RESPONSE_TYPES.BUFFER:
-                            return new JBuffer(await data.arrayBuffer())
+                            return { data:new JBuffer(await data.arrayBuffer()), headers:data.headers }
                         case Jax.RESPONSE_TYPES.JSON:
-                            return data.json()
+                            return { data:data.json(), headers:data.headers }
                         default:
-                            return data.text()
+                            return { data:data.text(), headers:data.headers }
                     }
                 }).then(result=>{
-                    let response = (this.#responseType === Jax.RESPONSE_TYPES.DOC && typeof result === 'string' && typeof DOMParser === 'function') ?
+                    let response = (this.#responseType === Jax.RESPONSE_TYPES.DOC && typeof result.data === 'string' && typeof DOMParser === 'function') ?
                         {
-                           html:new DOMParser().parseFromString(result, 'text/html'), 
-                           xml:new DOMParser().parseFromString(result, 'application/xml'),
-                           svg:new DOMParser().parseFromString(result, 'image/svg+xml')
+                           html:new DOMParser().parseFromString(result.data, 'text/html'), 
+                           xml:new DOMParser().parseFromString(result.data, 'application/xml'),
+                           svg:new DOMParser().parseFromString(result.data, 'image/svg+xml')
                         }:
-                        result
+                        result.data
                     this.#method = null
                     this.#onprogress = null
                     this.#credentials = null
@@ -1453,7 +1457,7 @@ class JaxRequest{
                     this.#body=null
                     this.#url=null
                     this.#responseType=null
-                    resolve({success:true,data:response})
+                    resolve({success:true, data:response, headers:new Map(result.headers)})
                 })
                 .catch(err=>reject(err))
         })

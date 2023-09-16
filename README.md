@@ -185,6 +185,7 @@ _(значение по умолчанию: 'http')_
 {
     success: true
     data: /*response*/ 
+    headers: /*response headers Map*/
 }
 
 // Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
@@ -224,7 +225,15 @@ Jax.get('http://example/jax-get',{
     - __params.progress__ ( _Function_ )( _не обязательный_ ) - Callback-функция для получения текущего прогресса отправки данных __( не работает в Node.JS )__
 
 #### __Возврат:__
-( ___Promise\<object\>___ ) В случае успешного выполнения вернет объект с результатом
+( ___Promise\<object\>___ ) В случае успешного выполнения вернет объект с результатом следующего вида
+
+```js
+{
+    success: true
+    data: /*response*/
+    headers: /*response headers Map*/ 
+}
+```
 
 __Пример POST-запроса:__
 ```js
@@ -390,7 +399,8 @@ Jax.post(url).then(result => {
 ```js
 {
     success: true
-    data: /*response*/ 
+    data: /*response*/
+    headers: /*response headers Map*/ 
 }
 
 // Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
@@ -420,7 +430,8 @@ Jax.post(url).then(result => {
 ```js
 {
     success: true
-    data: /*response*/ 
+    data: /*response*/
+    headers: /*response headers Map*/ 
 }
 
 // Свойство data необходимо проверять на undefined, т.к. его может и не быть если с сервера был отправлен только код состояния
